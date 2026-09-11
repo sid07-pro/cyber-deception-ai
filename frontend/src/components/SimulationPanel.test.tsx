@@ -31,6 +31,8 @@ vi.mock('../api/client', () => ({
   stepSession: (...args: unknown[]) => stepSession(...args),
   resetSession: (...args: unknown[]) => resetSession(...args),
   analyzeWithAI: vi.fn(),
+  createPlan: vi.fn(),
+  runExperiment: vi.fn(),
 }))
 
 const NETWORK: NetworkResponse = {

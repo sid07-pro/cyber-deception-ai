@@ -9,7 +9,11 @@
 import type {
   AIAnalyzeRequest,
   AIAnalyzeResponse,
+  ExperimentRequest,
+  ExperimentResponse,
   NetworkResponse,
+  PlanRequest,
+  PlanResponse,
   SimulationRequest,
   SimulationResponse,
   SimulationStateResponse,
@@ -107,4 +111,25 @@ export function analyzeWithAI(
   signal?: AbortSignal,
 ): Promise<AIAnalyzeResponse> {
   return apiPost<AIAnalyzeResponse>('/ai/analyze', request, signal)
+}
+
+export function createPlan(
+  request: PlanRequest,
+  signal?: AbortSignal,
+): Promise<PlanResponse> {
+  return apiPost<PlanResponse>('/planning/plan', request, signal)
+}
+
+export function runExperiment(
+  request: ExperimentRequest,
+  signal?: AbortSignal,
+): Promise<ExperimentResponse> {
+  return apiPost<ExperimentResponse>('/experiments/run', request, signal)
+}
+
+export function getExperiment(
+  experimentId: string,
+  signal?: AbortSignal,
+): Promise<ExperimentResponse> {
+  return apiGet<ExperimentResponse>(`/experiments/${experimentId}`, signal)
 }

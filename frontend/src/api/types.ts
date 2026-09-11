@@ -163,3 +163,121 @@ export interface AIAnalyzeResponse {
   metrics: Record<string, unknown>
   explanation: string[]
 }
+
+// ---- Planning and experiments (Milestone 5) ----
+
+export const PLANNING_METHODS = ['forward', 'backward'] as const
+export type PlanningMethod = (typeof PLANNING_METHODS)[number]
+
+export const GOAL_TYPES = ['protect_target', 'intercept_attacker', 'contain_breach'] as const
+export type GoalType = (typeof GOAL_TYPES)[number]
+
+export const GOAL_LABELS: Record<GoalType, string> = {
+  protect_target: 'Protect the target',
+  intercept_attacker: 'Intercept the attacker',
+  contain_breach: 'Contain the breach',
+}
+
+export interface PlanRequest {
+  method: PlanningMethod
+  start_node?: string | null
+  target_node?: string | null
+  honeypot_budget?: number
+  max_depth?: number
+  goal_type?: GoalType
+}
+
+export interface PlanAction {
+  name: string
+  parameters: string[]
+  cost: number
+  description: string
+}
+
+export interface PlanResponse {
+  method: PlanningMethod
+  goal_type: GoalType
+  goal: string
+  start_node: string
+  target_node: string
+  honeypot_budget: number
+  max_depth: number
+  success: boolean
+  actions: PlanAction[]
+  plan_length: number
+  plan_cost: number
+  explored_states: number
+  final_state: string[]
+  reason: string
+  explanation: string[]
+}
+
+export const HONEYPOT_STRATEGIES = [
+  'none',
+  'random',
+  'greedy',
+  'hill_climbing',
+  'genetic_algorithm',
+] as const
+export type HoneypotStrategy = (typeof HONEYPOT_STRATEGIES)[number]
+
+export const STRATEGY_LABELS: Record<HoneypotStrategy, string> = {
+  none: 'No deception',
+  random: 'Random placement',
+  greedy: 'Greedy (deception score)',
+  hill_climbing: 'Hill Climbing',
+  genetic_algorithm: 'Genetic Algorithm',
+}
+
+export interface ExperimentRequest {
+  algorithm: SearchAlgorithm
+  strategy: HoneypotStrategy
+  honeypot_budget?: number
+  runs?: number
+  seed?: number
+  start_node?: string | null
+  target_node?: string | null
+  compare_strategies?: boolean
+}
+
+export interface ExperimentMetrics {
+  total_runs: number
+  successful_attacks: number
+  intercepted_attacks: number
+  deception_success_rate: number
+  attack_success_rate: number
+  average_path_cost: number
+  average_nodes_explored: number
+  average_steps: number
+  average_execution_ms: number
+  average_honeypot_count: number
+  average_fitness: number
+}
+
+export interface StrategyComparison extends ExperimentMetrics {
+  strategy: HoneypotStrategy
+}
+
+export interface RunSummary {
+  run: number
+  seed: number
+  outcome: string
+  path_cost: number
+  nodes_explored: number
+  steps: number
+  honeypots: string[]
+  honeypot_count: number
+  intercepted_at: string | null
+  fitness: number
+  execution_ms: number
+}
+
+export interface ExperimentResponse {
+  experiment_id: string
+  configuration: Record<string, unknown>
+  metrics: ExperimentMetrics
+  strategy_comparison: StrategyComparison[]
+  runs: RunSummary[]
+  truncated_runs: number
+  explanation: string[]
+}

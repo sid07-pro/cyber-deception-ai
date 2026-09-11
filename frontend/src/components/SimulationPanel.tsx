@@ -19,7 +19,9 @@ import type {
 } from '../api/types'
 import { AdvancedAIPanel } from './AdvancedAIPanel'
 import { EventTimeline } from './EventTimeline'
+import { ExperimentLab } from './ExperimentLab'
 import { NetworkGraph } from './NetworkGraph'
+import { PlanningPanel } from './PlanningPanel'
 import { HistoryList, type HistoryEntry } from './HistoryList'
 import { ResultPanel } from './ResultPanel'
 import { SimulationControls, type SimulationSettings } from './SimulationControls'
@@ -216,6 +218,14 @@ export function SimulationPanel() {
       <EventTimeline events={session?.events ?? []} />
 
       <AdvancedAIPanel settings={settings} />
+
+      <PlanningPanel settings={settings} />
+
+      <ExperimentLab
+        nodeNames={network.nodes.map((node) => node.name)}
+        defaultStart={network.attacker_start}
+        defaultTarget={network.critical_target}
+      />
 
       {result ? (
         <ResultPanel result={result} />
