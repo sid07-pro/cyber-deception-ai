@@ -6,6 +6,12 @@
  * forwarded by the Vite dev proxy to the FastAPI server.
  */
 
+import type {
+  NetworkResponse,
+  SimulationRequest,
+  SimulationResponse,
+} from './types'
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 export interface HealthResponse {
@@ -14,11 +20,43 @@ export interface HealthResponse {
   version: string
 }
 
+/** Turns a non-2xx response into an Error carrying the backend's `detail`, when present. */
+async function toError(response: Response, path: string): Promise<Error> {
+  try {
+    const body = (await response.json()) as { detail?: unknown }
+    if (typeof body.detail === 'string') {
+      return new Error(body.detail)
+    }
+  } catch {
+    // Body was not JSON; fall through to the generic message.
+  }
+  return new Error(`Request to ${path} failed with status ${response.status}`)
+}
+
 export async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(`${API_BASE_URL}/api${path}`, { signal })
 
   if (!response.ok) {
-    throw new Error(`Request to ${path} failed with status ${response.status}`)
+    throw await toError(response, path)
+  }
+
+  return (await response.json()) as T
+}
+
+export async function apiPost<T>(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}/api${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  })
+
+  if (!response.ok) {
+    throw await toError(response, path)
   }
 
   return (await response.json()) as T
@@ -26,4 +64,15 @@ export async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> 
 
 export function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
   return apiGet<HealthResponse>('/health', signal)
+}
+
+export function getNetwork(signal?: AbortSignal): Promise<NetworkResponse> {
+  return apiGet<NetworkResponse>('/network', signal)
+}
+
+export function runSimulation(
+  request: SimulationRequest,
+  signal?: AbortSignal,
+): Promise<SimulationResponse> {
+  return apiPost<SimulationResponse>('/simulate', request, signal)
 }
