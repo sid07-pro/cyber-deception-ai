@@ -10,6 +10,8 @@ import type {
   NetworkResponse,
   SimulationRequest,
   SimulationResponse,
+  SimulationStateResponse,
+  StartSimulationRequest,
 } from './types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -75,4 +77,25 @@ export function runSimulation(
   signal?: AbortSignal,
 ): Promise<SimulationResponse> {
   return apiPost<SimulationResponse>('/simulate', request, signal)
+}
+
+export function startSession(
+  request: StartSimulationRequest,
+  signal?: AbortSignal,
+): Promise<SimulationStateResponse> {
+  return apiPost<SimulationStateResponse>('/simulation/start', request, signal)
+}
+
+export function stepSession(
+  sessionId: string,
+  signal?: AbortSignal,
+): Promise<SimulationStateResponse> {
+  return apiPost<SimulationStateResponse>('/simulation/step', { session_id: sessionId }, signal)
+}
+
+export function resetSession(
+  sessionId: string,
+  signal?: AbortSignal,
+): Promise<SimulationStateResponse> {
+  return apiPost<SimulationStateResponse>('/simulation/reset', { session_id: sessionId }, signal)
 }

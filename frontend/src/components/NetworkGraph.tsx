@@ -23,6 +23,8 @@ interface NetworkGraphProps {
   network: NetworkResponse
   path?: string[]
   honeypots?: string[]
+  visitedNodes?: string[]
+  attackerPosition?: string | null
 }
 
 const COLUMN_WIDTH = 200
@@ -77,6 +79,8 @@ function nodeStyle(
   criticality: string,
   isHoneypot: boolean,
   isOnPath: boolean,
+  isVisited: boolean,
+  isAttacker: boolean,
 ): React.CSSProperties {
   const base: React.CSSProperties = {
     width: 150,
@@ -105,14 +109,28 @@ function nodeStyle(
   if (isOnPath) {
     base.boxShadow = '0 0 0 2px #34d399'
   }
+  if (isVisited) {
+    base.borderColor = '#38bdf8'
+  }
+  if (isAttacker) {
+    base.boxShadow = '0 0 0 3px #f87171'
+    base.borderColor = '#f87171'
+  }
   return base
 }
 
-export function NetworkGraph({ network, path = [], honeypots = [] }: NetworkGraphProps) {
+export function NetworkGraph({
+  network,
+  path = [],
+  honeypots = [],
+  visitedNodes = [],
+  attackerPosition = null,
+}: NetworkGraphProps) {
   const { nodes, edges } = useMemo(() => {
     const positions = computePositions(network)
     const pathSet = new Set(path)
     const honeypotSet = new Set(honeypots)
+    const visitedSet = new Set(visitedNodes)
 
     // Consecutive pairs of the attacker path, order-insensitive for lookup.
     const pathEdges = new Set<string>()
@@ -123,6 +141,8 @@ export function NetworkGraph({ network, path = [], honeypots = [] }: NetworkGrap
     const flowNodes: Node[] = network.nodes.map((node) => {
       const isHoneypot = honeypotSet.has(node.id)
       const isOnPath = pathSet.has(node.id)
+      const isVisited = visitedSet.has(node.id)
+      const isAttacker = node.id === attackerPosition
       return {
         id: node.id,
         position: positions[node.id] ?? { x: 0, y: 0 },
@@ -133,10 +153,14 @@ export function NetworkGraph({ network, path = [], honeypots = [] }: NetworkGrap
               <div className="text-[10px] uppercase tracking-wide text-slate-400">{node.type}</div>
               <div className="text-[10px] text-slate-400">criticality: {node.criticality}</div>
               {isHoneypot && <div className="text-[10px] text-amber-400">honeypot deployed</div>}
+              {isAttacker && <div className="text-[10px] text-red-400">attacker here</div>}
+              {isVisited && !isAttacker && (
+                <div className="text-[10px] text-sky-400">visited</div>
+              )}
             </div>
           ),
         },
-        style: nodeStyle(node.criticality, isHoneypot, isOnPath),
+        style: nodeStyle(node.criticality, isHoneypot, isOnPath, isVisited, isAttacker),
         draggable: false,
         connectable: false,
       }
@@ -158,7 +182,7 @@ export function NetworkGraph({ network, path = [], honeypots = [] }: NetworkGrap
     })
 
     return { nodes: flowNodes, edges: flowEdges }
-  }, [network, path, honeypots])
+  }, [network, path, honeypots, visitedNodes, attackerPosition])
 
   return (
     <div className="h-[420px] w-full rounded-lg border border-slate-700 bg-slate-950">

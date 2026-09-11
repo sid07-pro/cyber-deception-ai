@@ -72,3 +72,53 @@ export interface SimulationResponse {
   algorithm_comparison: AlgorithmComparison[]
   explanation: string[]
 }
+
+// ---- Stepped simulation sessions (Milestone 3) ----
+
+export type SimulationStatus = 'ready' | 'running' | 'completed'
+export type SessionOutcome = 'intercepted' | 'target_reached' | 'failed' | 'invalid'
+
+export interface StartSimulationRequest {
+  algorithm: SearchAlgorithm
+  start_node?: string | null
+  target_node?: string | null
+  honeypot_budget?: number
+}
+
+export interface SimulationEvent {
+  step: number
+  kind: string
+  node: string | null
+  message: string
+}
+
+export interface ProtectionSummary {
+  covered_nodes: number
+  path_coverage: number
+  risk_level: string
+}
+
+export interface SimulationStateResponse {
+  session_id: string
+  algorithm: SearchAlgorithm
+  start_node: string
+  target_node: string
+  honeypot_budget: number
+  predicted_path: string[]
+  path_cost: number
+  nodes_explored: number
+  honeypots: string[]
+  honeypot_scores: HoneypotScore[]
+  attacker_position: string
+  path_index: number
+  visited_nodes: string[]
+  compromised_nodes: string[]
+  time_step: number
+  status: SimulationStatus
+  outcome: SessionOutcome | null
+  is_complete: boolean
+  current_event: SimulationEvent | null
+  events: SimulationEvent[]
+  explanation: string[]
+  protection: ProtectionSummary
+}
