@@ -14,10 +14,15 @@ import type {
   NetworkResponse,
   PlanRequest,
   PlanResponse,
+  SaveCurrentNetworkRequest,
+  SaveExperimentRequest,
+  ScenarioResponse,
+  ScenarioSummary,
   SimulationRequest,
   SimulationResponse,
   SimulationStateResponse,
   StartSimulationRequest,
+  StoredExperimentSummary,
 } from './types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -132,4 +137,45 @@ export function getExperiment(
   signal?: AbortSignal,
 ): Promise<ExperimentResponse> {
   return apiGet<ExperimentResponse>(`/experiments/${experimentId}`, signal)
+}
+
+export function saveCurrentNetwork(
+  request: SaveCurrentNetworkRequest,
+  signal?: AbortSignal,
+): Promise<ScenarioResponse> {
+  return apiPost<ScenarioResponse>('/scenarios/save-current', request, signal)
+}
+
+export function listScenarios(signal?: AbortSignal): Promise<ScenarioSummary[]> {
+  return apiGet<ScenarioSummary[]>('/scenarios', signal)
+}
+
+export function getScenario(
+  scenarioId: number,
+  signal?: AbortSignal,
+): Promise<ScenarioResponse> {
+  return apiGet<ScenarioResponse>(`/scenarios/${scenarioId}`, signal)
+}
+
+export async function deleteScenario(scenarioId: number, signal?: AbortSignal): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/scenarios/${scenarioId}`, {
+    method: 'DELETE',
+    signal,
+  })
+  if (!response.ok) {
+    throw await toError(response, `/scenarios/${scenarioId}`)
+  }
+}
+
+export function saveExperiment(
+  request: SaveExperimentRequest,
+  signal?: AbortSignal,
+): Promise<unknown> {
+  return apiPost('/experiments/save', request, signal)
+}
+
+export function listStoredExperiments(
+  signal?: AbortSignal,
+): Promise<StoredExperimentSummary[]> {
+  return apiGet<StoredExperimentSummary[]>('/experiments-history', signal)
 }

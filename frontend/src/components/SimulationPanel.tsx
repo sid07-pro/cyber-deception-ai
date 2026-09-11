@@ -1,36 +1,25 @@
 /**
  * SimulationPanel.tsx
- * Orchestrates the simulation workspace: network graph, controls, stepped
- * session, result, event timeline, and this session's recent runs.
+ * The simulation workspace: network graph, controls, stepped session,
+ * result, event timeline, and this session's recent runs.
+ *
+ * The network and the shared scenario settings are owned by App, so every
+ * page works against the same start node, target, and honeypot budget.
  */
 
-import { useEffect, useState } from 'react'
-import {
-  getNetwork,
-  resetSession,
-  runSimulation,
-  startSession,
-  stepSession,
-} from '../api/client'
+import { useState } from 'react'
+import { resetSession, runSimulation, startSession, stepSession } from '../api/client'
 import type {
   NetworkResponse,
   SimulationResponse,
   SimulationStateResponse,
 } from '../api/types'
-import { AdvancedAIPanel } from './AdvancedAIPanel'
 import { EventTimeline } from './EventTimeline'
-import { ExperimentLab } from './ExperimentLab'
 import { NetworkGraph } from './NetworkGraph'
-import { PlanningPanel } from './PlanningPanel'
 import { HistoryList, type HistoryEntry } from './HistoryList'
 import { ResultPanel } from './ResultPanel'
 import { SimulationControls, type SimulationSettings } from './SimulationControls'
 import { StepControls } from './StepControls'
-
-type NetworkState =
-  | { kind: 'loading' }
-  | { kind: 'ready'; network: NetworkResponse }
-  | { kind: 'error'; message: string }
 
 type RunState = { kind: 'idle' } | { kind: 'running' } | { kind: 'error'; message: string }
 
@@ -40,39 +29,22 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Unknown error'
 }
 
-export function SimulationPanel() {
-  const [networkState, setNetworkState] = useState<NetworkState>({ kind: 'loading' })
+interface SimulationPanelProps {
+  network: NetworkResponse
+  settings: SimulationSettings
+  onSettingsChange: (settings: SimulationSettings) => void
+}
+
+export function SimulationPanel({
+  network,
+  settings,
+  onSettingsChange,
+}: SimulationPanelProps) {
   const [runState, setRunState] = useState<RunState>({ kind: 'idle' })
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [session, setSession] = useState<SimulationStateResponse | null>(null)
   const [isSessionBusy, setSessionBusy] = useState(false)
-  const [settings, setSettings] = useState<SimulationSettings>({
-    algorithm: 'A*',
-    startNode: '',
-    targetNode: '',
-    honeypotCount: 2,
-  })
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    getNetwork(controller.signal)
-      .then((network) => {
-        setNetworkState({ kind: 'ready', network })
-        setSettings((current) => ({
-          ...current,
-          startNode: network.attacker_start,
-          targetNode: network.critical_target,
-        }))
-      })
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === 'AbortError') return
-        setNetworkState({ kind: 'error', message: errorMessage(error) })
-      })
-
-    return () => controller.abort()
-  }, [])
 
   const handleRun = () => {
     setRunState({ kind: 'running' })
@@ -126,24 +98,6 @@ export function SimulationPanel() {
     withSession(() => resetSession(session.session_id))
   }
 
-  if (networkState.kind === 'loading') {
-    return (
-      <div className="rounded-lg border border-slate-700 bg-slate-900 p-4">
-        <p className="text-slate-400">Loading network…</p>
-      </div>
-    )
-  }
-
-  if (networkState.kind === 'error') {
-    return (
-      <div className="rounded-lg border border-red-800 bg-slate-900 p-4">
-        <p className="font-semibold text-red-400">Could not load the network</p>
-        <p className="mt-1 text-sm text-slate-400">{networkState.message}</p>
-      </div>
-    )
-  }
-
-  const { network } = networkState
   const selected = history.find((entry) => entry.id === selectedId) ?? null
   const result: SimulationResponse | null = selected?.result ?? null
 
@@ -178,7 +132,7 @@ export function SimulationPanel() {
       <SimulationControls
         nodeNames={network.nodes.map((node) => node.name)}
         settings={settings}
-        onChange={setSettings}
+        onChange={onSettingsChange}
         onRun={handleRun}
         isRunning={runState.kind === 'running'}
       />
@@ -216,16 +170,6 @@ export function SimulationPanel() {
       )}
 
       <EventTimeline events={session?.events ?? []} />
-
-      <AdvancedAIPanel settings={settings} />
-
-      <PlanningPanel settings={settings} />
-
-      <ExperimentLab
-        nodeNames={network.nodes.map((node) => node.name)}
-        defaultStart={network.attacker_start}
-        defaultTarget={network.critical_target}
-      />
 
       {result ? (
         <ResultPanel result={result} />

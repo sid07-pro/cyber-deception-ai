@@ -30,10 +30,21 @@ vi.mock('../api/client', () => ({
   startSession: (...args: unknown[]) => startSession(...args),
   stepSession: (...args: unknown[]) => stepSession(...args),
   resetSession: (...args: unknown[]) => resetSession(...args),
-  analyzeWithAI: vi.fn(),
-  createPlan: vi.fn(),
-  runExperiment: vi.fn(),
 }))
+
+const SETTINGS = {
+  algorithm: 'A*' as const,
+  startNode: 'Internet',
+  targetNode: 'Database',
+  honeypotCount: 2,
+}
+
+/** The panel now receives the network and settings from App. */
+function renderPanel() {
+  return render(
+    <SimulationPanel network={NETWORK} settings={SETTINGS} onSettingsChange={() => {}} />,
+  )
+}
 
 const NETWORK: NetworkResponse = {
   nodes: [
@@ -139,9 +150,9 @@ afterEach(() => {
 
 describe('SimulationPanel', () => {
   it('renders the simulation controls once the network loads', async () => {
-    render(<SimulationPanel />)
+    renderPanel()
 
-    expect(await screen.findByRole('combobox', { name: 'Algorithm' })).toHaveValue('A*')
+    expect(screen.getByRole('combobox', { name: 'Algorithm' })).toHaveValue('A*')
     expect(screen.getByRole('combobox', { name: 'Start node' })).toHaveValue('Internet')
     expect(screen.getByRole('combobox', { name: 'Target node' })).toHaveValue('Database')
     expect(screen.getByRole('combobox', { name: 'Honeypots' })).toHaveValue('2')
@@ -151,9 +162,9 @@ describe('SimulationPanel', () => {
   })
 
   it('shows the result and records history after a successful run', async () => {
-    render(<SimulationPanel />)
+    renderPanel()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Run Simulation' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Run Simulation' }))
 
     expect(await screen.findByText('Attacker intercepted by a honeypot')).toBeInTheDocument()
     expect(screen.getByText('Internet → Web Server → Database')).toBeInTheDocument()
@@ -180,18 +191,18 @@ describe('SimulationPanel', () => {
 
   it('shows an error state when the simulation request fails', async () => {
     runSimulation.mockRejectedValue(new Error("Unknown node 'Mainframe'."))
-    render(<SimulationPanel />)
+    renderPanel()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Run Simulation' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Run Simulation' }))
 
     expect(await screen.findByText('Simulation failed')).toBeInTheDocument()
     expect(screen.getByText("Unknown node 'Mainframe'.")).toBeInTheDocument()
   })
 
   it('starts a stepped session and enables Step and Reset', async () => {
-    render(<SimulationPanel />)
+    renderPanel()
 
-    expect(await screen.findByText(/No session yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/No session yet/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Step' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Reset' })).toBeDisabled()
 
@@ -209,9 +220,9 @@ describe('SimulationPanel', () => {
   })
 
   it('advances the attacker and reports interception, then disables Step', async () => {
-    render(<SimulationPanel />)
+    renderPanel()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Start Simulation' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Start Simulation' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Step' })).toBeEnabled())
 
     fireEvent.click(screen.getByRole('button', { name: 'Step' }))
@@ -226,9 +237,9 @@ describe('SimulationPanel', () => {
   })
 
   it('resets a session back to its first step', async () => {
-    render(<SimulationPanel />)
+    renderPanel()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Start Simulation' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Start Simulation' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Step' })).toBeEnabled())
     fireEvent.click(screen.getByRole('button', { name: 'Step' }))
     await screen.findByText('Attacker intercepted by a honeypot')
@@ -238,15 +249,5 @@ describe('SimulationPanel', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Step' })).toBeEnabled())
     expect(resetSession).toHaveBeenCalledWith('session-1')
     expect(screen.queryByText('Attacker intercepted by a honeypot')).not.toBeInTheDocument()
-  })
-
-  it('shows an error state when the network cannot be loaded', async () => {
-    getNetwork.mockRejectedValue(new Error('Backend unreachable'))
-    render(<SimulationPanel />)
-
-    await waitFor(() =>
-      expect(screen.getByText('Could not load the network')).toBeInTheDocument(),
-    )
-    expect(screen.getByText('Backend unreachable')).toBeInTheDocument()
   })
 })

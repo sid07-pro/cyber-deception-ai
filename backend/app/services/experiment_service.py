@@ -10,7 +10,7 @@ runs, varies seeds, and aggregates metrics.
 
 import random
 import time
-from typing import Any, Callable
+from typing import Any
 from uuid import uuid4
 
 import networkx as nx
@@ -286,10 +286,3 @@ def _explain(
         )
 
     return lines
-
-
-# Exposed for the API layer's error mapping.
-ERRORS: dict[str, Callable[..., Exception]] = {
-    "invalid": InvalidExperimentError,
-    "not_found": ExperimentNotFoundError,
-}

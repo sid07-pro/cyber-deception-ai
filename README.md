@@ -1,97 +1,173 @@
-# CYBER-DECEPTION AI
+# Cyber Deception AI
 
 **Intelligent Honeypot Placement & Attacker Path Prediction**
 
-## Project Title
-AI-Based Cyber Deception System for Intelligent Honeypot Placement and Attacker Path Prediction
+An AI coursework project that treats network defence as a search, game, and planning problem:
+an attacker agent predicts its route to a critical asset, a defender agent spends a honeypot
+budget to intercept it, and the whole interaction is simulated, explained, and measured.
 
-## Problem Statement
-Traditional network defense is reactive. This project explores whether AI search and optimization
-techniques can proactively predict an attacker's most likely path through a network and place
-deceptive decoy systems (honeypots) to intercept the attacker before a critical asset is reached.
+> **Simulation only.** Everything here is synthetic. There are no real hosts, addresses,
+> credentials, exploits, or offensive capabilities anywhere in this project — the "attacker" is a
+> search algorithm walking a weighted graph. See [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
-## Motivation
-Cyber deception is a growing area of defensive security research. Rather than only blocking
-attacks, deception techniques aim to mislead attackers into wasting effort on decoys, buying
-defenders time and generating early warning. This project reframes that problem as a classic
-AI planning and search problem, suitable for demonstrating core AI coursework concepts.
+---
 
-## Objectives
-- Represent a network as a weighted graph (state space).
-- Model an attacker as a goal-based intelligent agent seeking a critical asset.
-- Implement uninformed search (BFS, DFS) and informed search (UCS, A*) to predict attacker paths.
-- Model a defender as a utility-based agent that optimally places honeypots using a transparent
-  scoring function (a local-search/optimization approach).
-- Simulate the attacker-defender interaction and determine whether deception succeeds.
-- Provide an explainability panel describing *why* each AI decision was made.
+## Architecture
 
-## AI Concepts Used
-- Intelligent agents (goal-based attacker, utility-based defender)
-- State-space representation
-- Uninformed search: BFS, DFS
-- Informed search: Uniform Cost Search, A* (f(n) = g(n) + h(n))
-- Local search / optimization (honeypot deception scoring)
-- (Optional/Phase 2) Adversarial search (Minimax), Bayesian reasoning
-
-## System Architecture
 ```
-PERCEPTION → NETWORK STATE → ATTACKER AGENT → SEARCH →
-DEFENDER AGENT → HONEYPOT OPTIMIZATION → ATTACK SIMULATION → DECISION
+React + TypeScript + Vite  ──HTTP──►  FastAPI  ──►  ai/ + simulation/  (pure Python)
+   React Flow visualization              │
+                                         └──►  SQLAlchemy  ──►  PostgreSQL (saved scenarios,
+                                                                 experiment history)
 ```
 
-## Algorithms
-All four search algorithms (BFS, DFS, UCS, A*) are implemented manually (no library search
-calls) in `ai/bfs.py`, `ai/dfs.py`, `ai/ucs.py`, `ai/astar.py`, so each step can be explained
-during the viva.
+| Layer | Location | Responsibility |
+| --- | --- | --- |
+| Algorithms | `backend/ai/`, `backend/simulation/` | Search, agents, game search, Bayesian risk, optimizers, planning. No HTTP, no ORM. |
+| Services | `backend/app/services/` | Adapters that compose the algorithms and return plain data. |
+| Schemas | `backend/app/schemas/` | Pydantic request/response contracts. |
+| Routes | `backend/app/api/routes/` | HTTP only: validation, status codes, error mapping. |
+| Models | `backend/app/models/` | SQLAlchemy ORM entities. |
+| Frontend | `frontend/src/` | Pages, components, typed API client. |
+| Legacy | `legacy/app.py` | The original Streamlit prototype, preserved for reference. Not part of the running stack. |
 
-A*'s heuristic `h(n)` is the BFS hop-distance from a node to the target, scaled by the graph's
-minimum edge weight — this keeps the heuristic admissible (never overestimates true cost).
+---
 
-## Technology Stack
-- Python 3
-- Streamlit (dashboard UI)
-- NetworkX (graph data structure)
-- Plotly (interactive network visualization)
-- Pandas (tabular displays)
+## Prerequisites
 
-## Installation
+- Python 3.12+
+- Node.js 20+
+- Docker Desktop (optional — only for the containerised stack and PostgreSQL)
+
+---
+
+## Local setup
+
+### Backend
+
 ```bash
-cd cyber-deception-ai
+cd backend
+python -m venv .venv
+.venv/Scripts/activate        # Windows;  source .venv/bin/activate on macOS/Linux
 pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload --port 8000
 ```
 
-## Run Instructions
+The API is then at `http://localhost:8000`, with interactive docs at `/docs`.
+
+### Frontend
+
 ```bash
-streamlit run app.py
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
 ```
-Then open the local URL Streamlit prints (typically `http://localhost:8501`).
 
-## Demo Scenario
-Click **"Run Demo Scenario"** in the sidebar. This automatically:
-1. Loads the predefined network.
-2. Runs all four search algorithms and compares them.
-3. Selects the attacker's path (default strategy: A*).
-4. Computes defender honeypot placement.
-5. Runs the attack simulation and shows the final result.
+Open `http://localhost:5173`. Vite proxies `/api` to the backend, so no CORS setup is needed
+during development.
 
-The entire flow — network → attack path → AI search → honeypot placement → attack → deception
-outcome — can be demonstrated in under two minutes.
+---
 
-## Testing
-Run `python test_algorithms.py` to verify:
-- All algorithms return valid, connected paths from attacker start to target.
-- UCS returns the true minimum-cost path (verified by brute-force comparison).
-- A* matches UCS's optimal cost.
-- The full simulation pipeline runs end-to-end without errors.
+## Database
 
-## Important Note
-This is an **educational, fully simulated system**. All network nodes, attackers, and events are
-fictional. No real hacking, exploitation, scanning, or offensive cybersecurity functionality is
-implemented anywhere in this codebase.
+Persistence is **optional**. Without a database every simulation, AI, planning, and experiment
+endpoint still works; only the persistence endpoints answer `503`.
 
-## Future Scope
-- Adversarial search (Minimax) between attacker and defender.
-- Bayesian reasoning module for probabilistic threat estimation.
-- Larger, randomly generated network topologies.
-- Reinforcement-learning-based adaptive defender.
-- Multi-attacker / multi-honeypot scenarios.
+- **Default (no setup):** SQLite at `backend/cyber_deception.db` —
+  `DATABASE_URL=sqlite:///./cyber_deception.db`
+- **PostgreSQL:**
+  `DATABASE_URL=postgresql+psycopg://cda:<password>@localhost:5432/cyber_deception`
+
+Tables are created automatically at startup via `metadata.create_all`. The schema is small and
+additive, so no migration tool is used; Alembic can be layered on later without model changes.
+
+---
+
+## Docker
+
+```bash
+cp .env.example .env          # set POSTGRES_PASSWORD
+docker compose up --build
+```
+
+Starts three services: `db` (PostgreSQL 16 with a persistent volume and a `pg_isready`
+healthcheck), `backend` (waits for the database to be healthy), and `frontend`. No secrets are
+hardcoded — the compose file reads them from `.env`, which is gitignored.
+
+```bash
+docker compose config        # validate without starting anything
+docker compose down          # stop
+docker compose down -v       # stop and delete the database volume
+```
+
+---
+
+## API overview
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/api/health` | Liveness. |
+| GET | `/api/network` | The simulated topology. |
+| POST | `/api/simulate` | One-shot simulation with a chosen search algorithm. |
+| POST | `/api/simulation/start` | Begin a stepped session (in memory). |
+| POST | `/api/simulation/step` | Advance the attacker one hop. |
+| POST | `/api/simulation/reset` | Rewind a session to step 0. |
+| POST | `/api/ai/analyze` | Minimax, Alpha-Beta, Bayesian, Hill Climbing, Genetic Algorithm. |
+| POST | `/api/planning/plan` | Forward or backward defensive plan. |
+| POST | `/api/experiments/run` | Repeated runs with strategy comparison. |
+| GET | `/api/experiments/{id}` | Retrieve an in-memory experiment. |
+| POST | `/api/scenarios` | Save a network scenario. |
+| POST | `/api/scenarios/save-current` | Save the built-in network under a name. |
+| GET | `/api/scenarios` | List saved scenarios. |
+| GET | `/api/scenarios/{id}` | Retrieve one scenario. |
+| DELETE | `/api/scenarios/{id}` | Delete a scenario and its experiments. |
+| POST | `/api/experiments/save` | Persist a completed experiment. |
+| GET | `/api/experiments-history` | List persisted experiments. |
+| GET | `/api/experiments-history/{id}` | Retrieve one persisted experiment. |
+
+---
+
+## Tests
+
+```bash
+cd backend && .venv/Scripts/python -m pytest -q
+cd frontend && npx tsc -b --noEmit && npx vitest run && npm run build
+```
+
+Backend tests use a temporary SQLite database, so none of them require a running PostgreSQL
+server.
+
+---
+
+## Project structure
+
+```
+backend/
+  ai/            search, agents, game search, Bayesian, optimizers, planning
+  simulation/    network model and the original simulation pipeline
+  app/
+    api/routes/  HTTP endpoints
+    schemas/     Pydantic contracts
+    services/    adapters over the algorithms
+    models/      SQLAlchemy entities
+    db/          engine and session management
+  tests/         pytest suite
+frontend/
+  src/
+    api/         typed client and shared types
+    components/  graph, controls, panels
+    pages/       dashboard, scenarios, about
+    lib/         JSON/CSV export helpers
+docs/            methodology and AI technique notes
+legacy/          the original Streamlit prototype (reference only)
+```
+
+---
+
+## Documentation
+
+- [docs/METHODOLOGY.md](docs/METHODOLOGY.md) — AI techniques, simulation workflow, metrics,
+  limitations, and future improvements.
+- [REVIEW_1_CONTENT.md](REVIEW_1_CONTENT.md) — Review 1 presentation material.

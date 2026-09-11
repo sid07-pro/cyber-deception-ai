@@ -1,4 +1,21 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: cda-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cda}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-cyber_deception}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cda} -d ${POSTGRES_DB:-cyber_deception}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build: ./backend
     container_name: cda-backend
@@ -6,6 +23,19 @@ services:
       - "8000:8000"
     environment:
       CORS_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173"
+      DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER:-cda}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-cyber_deception}"
+    depends_on:
+      # The backend creates its tables at startup, so wait for a live database.
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     volumes:
       - ./backend:/app
       - /app/.venv
@@ -19,7 +49,11 @@ services:
       VITE_API_BASE_URL: ""
       VITE_PROXY_TARGET: "http://backend:8000"
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     volumes:
       - ./frontend:/app
       - /app/node_modules
+
+volumes:
+  postgres-data:

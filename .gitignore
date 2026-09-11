@@ -33,3 +33,5 @@ Thumbs.db
 # Data artifacts
 data/*.db
 data/*.sqlite3
+*.db
+*.sqlite3

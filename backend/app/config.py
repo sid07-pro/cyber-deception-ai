@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Comma-separated list of origins allowed to call the API.
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
+    # SQLAlchemy URL. Defaults to a local SQLite file so the API runs without
+    # PostgreSQL; Docker Compose supplies a postgresql+psycopg URL instead.
+    database_url: str = "sqlite:///./cyber_deception.db"
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]

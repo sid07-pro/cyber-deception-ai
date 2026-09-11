@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react'
-import { runExperiment } from '../api/client'
+import { runExperiment, saveExperiment } from '../api/client'
 import {
   HONEYPOT_STRATEGIES,
   SEARCH_ALGORITHMS,
@@ -213,6 +213,21 @@ export function ExperimentLab({ nodeNames, defaultStart, defaultTarget }: Experi
 
 function ExperimentReport({ experiment }: { experiment: ExperimentResponse }) {
   const { metrics } = experiment
+  const [saveState, setSaveState] = useState<
+    { kind: 'idle' } | { kind: 'saving' } | { kind: 'saved' } | { kind: 'error'; message: string }
+  >({ kind: 'idle' })
+
+  const handleSave = () => {
+    setSaveState({ kind: 'saving' })
+    saveExperiment({ experiment_id: experiment.experiment_id })
+      .then(() => setSaveState({ kind: 'saved' }))
+      .catch((error: unknown) =>
+        setSaveState({
+          kind: 'error',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        }),
+      )
+  }
 
   return (
     <div className="mt-4 space-y-4">
@@ -235,7 +250,22 @@ function ExperimentReport({ experiment }: { experiment: ExperimentResponse }) {
         >
           Download CSV
         </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saveState.kind === 'saving' || saveState.kind === 'saved'}
+          className="rounded border border-slate-600 px-3 py-1.5 text-sm text-slate-200 hover:border-slate-500 disabled:cursor-not-allowed disabled:text-slate-500"
+        >
+          {saveState.kind === 'saved' ? 'Saved' : 'Save to Database'}
+        </button>
       </div>
+
+      {saveState.kind === 'error' && (
+        <div className="rounded border border-red-800 bg-slate-950 p-3">
+          <p className="font-semibold text-red-400">Could not save the experiment</p>
+          <p className="mt-1 text-sm text-slate-400">{saveState.message}</p>
+        </div>
+      )}
 
       <dl className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
         <Metric label="Interception rate" value={percent(metrics.deception_success_rate)} />

@@ -281,3 +281,48 @@ export interface ExperimentResponse {
   truncated_runs: number
   explanation: string[]
 }
+
+// ---- Persistence (Milestone 6) ----
+
+export interface ScenarioSummary {
+  id: number
+  name: string
+  description: string
+  attacker_start: string
+  critical_target: string
+  created_at: string
+  node_count: number
+  edge_count: number
+  experiment_count: number
+}
+
+export interface ScenarioResponse extends NetworkResponse {
+  id: number
+  name: string
+  description: string
+  created_at: string
+  experiment_count: number
+}
+
+export interface SaveCurrentNetworkRequest {
+  name: string
+  description?: string
+}
+
+export interface SaveExperimentRequest {
+  experiment_id: string
+  scenario_id?: number | null
+}
+
+export interface StoredExperimentSummary {
+  experiment_id: string
+  scenario_id: number | null
+  created_at: string
+  algorithm: SearchAlgorithm
+  strategy: HoneypotStrategy
+  honeypot_budget: number
+  runs: number
+  seed: number
+  deception_success_rate: number
+  attack_success_rate: number
+}
