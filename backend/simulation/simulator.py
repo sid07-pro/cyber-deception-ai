@@ -112,3 +112,8 @@ def _generate_explanations(attacker_decision, honeypots, honeypot_table, interce
         )
 
     return explanations
+
+
+# Public alias: the service layer reuses the same explanation generator the
+# Streamlit prototype used, so explanations stay identical across both UIs.
+generate_explanations = _generate_explanations
