@@ -30,6 +30,7 @@ vi.mock('../api/client', () => ({
   startSession: (...args: unknown[]) => startSession(...args),
   stepSession: (...args: unknown[]) => stepSession(...args),
   resetSession: (...args: unknown[]) => resetSession(...args),
+  analyzeWithAI: vi.fn(),
 }))
 
 const NETWORK: NetworkResponse = {

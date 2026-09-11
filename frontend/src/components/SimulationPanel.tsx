@@ -17,6 +17,7 @@ import type {
   SimulationResponse,
   SimulationStateResponse,
 } from '../api/types'
+import { AdvancedAIPanel } from './AdvancedAIPanel'
 import { EventTimeline } from './EventTimeline'
 import { NetworkGraph } from './NetworkGraph'
 import { HistoryList, type HistoryEntry } from './HistoryList'
@@ -213,6 +214,8 @@ export function SimulationPanel() {
       )}
 
       <EventTimeline events={session?.events ?? []} />
+
+      <AdvancedAIPanel settings={settings} />
 
       {result ? (
         <ResultPanel result={result} />

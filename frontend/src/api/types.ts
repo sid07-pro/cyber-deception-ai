@@ -122,3 +122,44 @@ export interface SimulationStateResponse {
   explanation: string[]
   protection: ProtectionSummary
 }
+
+// ---- Advanced AI techniques (Milestone 4) ----
+
+export const AI_TECHNIQUES = [
+  'minimax',
+  'alpha_beta',
+  'bayesian',
+  'hill_climbing',
+  'genetic_algorithm',
+] as const
+export type AITechnique = (typeof AI_TECHNIQUES)[number]
+
+export const AI_TECHNIQUE_LABELS: Record<AITechnique, string> = {
+  minimax: 'Minimax',
+  alpha_beta: 'Alpha-Beta',
+  bayesian: 'Bayesian Risk',
+  hill_climbing: 'Hill Climbing',
+  genetic_algorithm: 'Genetic Algorithm',
+}
+
+export interface AIAnalyzeRequest {
+  technique: AITechnique
+  start_node?: string | null
+  target_node?: string | null
+  honeypot_budget?: number
+  depth?: number
+  seed?: number
+  algorithm?: SearchAlgorithm
+}
+
+export interface AIAnalyzeResponse {
+  technique: AITechnique
+  start_node: string
+  target_node: string
+  recommendation: string
+  score: number
+  probability: number | null
+  honeypots: string[]
+  metrics: Record<string, unknown>
+  explanation: string[]
+}

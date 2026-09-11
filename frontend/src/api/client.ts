@@ -7,6 +7,8 @@
  */
 
 import type {
+  AIAnalyzeRequest,
+  AIAnalyzeResponse,
   NetworkResponse,
   SimulationRequest,
   SimulationResponse,
@@ -98,4 +100,11 @@ export function resetSession(
   signal?: AbortSignal,
 ): Promise<SimulationStateResponse> {
   return apiPost<SimulationStateResponse>('/simulation/reset', { session_id: sessionId }, signal)
+}
+
+export function analyzeWithAI(
+  request: AIAnalyzeRequest,
+  signal?: AbortSignal,
+): Promise<AIAnalyzeResponse> {
+  return apiPost<AIAnalyzeResponse>('/ai/analyze', request, signal)
 }
