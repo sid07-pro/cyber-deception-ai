@@ -110,7 +110,7 @@ docker compose down -v       # stop and delete the database volume
 | --- | --- | --- |
 | GET | `/api/health` | Liveness. |
 | GET | `/api/network` | The simulated topology. |
-| POST | `/api/simulate` | One-shot simulation with a chosen search algorithm. |
+| POST | `/api/simulate` | One-shot simulation with a chosen search algorithm; optional `scenario_id` runs it on a saved topology, and the response includes the 3 cheapest alternative routes. |
 | POST | `/api/simulation/start` | Begin a stepped session (in memory). |
 | POST | `/api/simulation/step` | Advance the attacker one hop. |
 | POST | `/api/simulation/reset` | Rewind a session to step 0. |
@@ -171,3 +171,7 @@ legacy/          the original Streamlit prototype (reference only)
 - [docs/METHODOLOGY.md](docs/METHODOLOGY.md) — AI techniques, simulation workflow, metrics,
   limitations, and future improvements.
 - [REVIEW_1_CONTENT.md](REVIEW_1_CONTENT.md) — Review 1 presentation material.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/ALGORITHMS.md](docs/ALGORITHMS.md),
+  [docs/API.md](docs/API.md), [docs/TESTING.md](docs/TESTING.md),
+  [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), [docs/CHANGELOG.md](docs/CHANGELOG.md)
+- [docs/RECOVERY_REPORT.md](docs/RECOVERY_REPORT.md) — 2026-10-21 audit and recovery record.

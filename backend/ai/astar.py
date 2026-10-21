@@ -20,7 +20,8 @@ def _build_heuristic(graph, goal):
     Precompute an admissible heuristic: BFS hop-distance to goal,
     scaled by the graph's minimum edge weight.
     """
-    min_weight = min(d["weight"] for _, _, d in graph.edges(data=True))
+    # An edgeless graph has no weights; h(n) = 0 keeps A* admissible (it becomes UCS).
+    min_weight = min((d["weight"] for _, _, d in graph.edges(data=True)), default=0)
 
     hop_dist = {goal: 0}
     queue = deque([goal])
@@ -38,6 +39,9 @@ def astar_search(graph, start, goal):
     """
     Returns (path, cost, nodes_explored).
     """
+    if start not in graph or goal not in graph:
+        return [], 0, 0
+
     heuristic = _build_heuristic(graph, goal)
 
     counter = 0

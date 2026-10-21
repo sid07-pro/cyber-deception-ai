@@ -43,12 +43,14 @@ def _node_connectivity(graph, node):
     return graph.degree(node)
 
 
-def score_candidates(graph, candidate_paths, candidates, target, top_n=2):
+def score_candidates(graph, candidate_paths, candidates, target, top_n=2, deployment_costs=None):
     """
     Computes the Deception Score for every honeypot candidate node.
 
-    candidates: iterable of nodes eligible for honeypot placement.
-    target:     the critical asset node used for proximity scoring.
+    candidates:       iterable of nodes eligible for honeypot placement.
+    target:           the critical asset node used for proximity scoring.
+    deployment_costs: optional {node: cost} override (saved scenarios); nodes
+                      missing from it cost 1, as before.
 
     Returns a sorted list of dicts (highest score first) and the top_n selections.
     """
@@ -57,7 +59,7 @@ def score_candidates(graph, candidate_paths, candidates, target, top_n=2):
         freq = _attack_path_frequency(node, candidate_paths)
         proximity = round(_target_proximity(graph, node, target), 3)
         connectivity = _node_connectivity(graph, node)
-        cost = DEPLOYMENT_COST.get(node, 1)
+        cost = (DEPLOYMENT_COST if deployment_costs is None else deployment_costs).get(node, 1)
 
         raw_score = (freq + proximity + connectivity) / cost
         scored.append({

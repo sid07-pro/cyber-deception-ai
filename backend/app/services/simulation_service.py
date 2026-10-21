@@ -7,7 +7,10 @@ delegated to the already-implemented modules in `simulation/` and `ai/`.
 Nothing here re-implements an algorithm, and nothing here knows about HTTP.
 """
 
+from itertools import islice
 from typing import Any
+
+import networkx as nx
 
 from ai.attacker import ALGORITHMS, run_all_algorithms, select_attacker_path
 from ai.defender import evaluate_interception, plan_defense
@@ -87,27 +90,100 @@ def get_network() -> dict[str, Any]:
     }
 
 
+# How many cheapest loop-free routes to report alongside the chosen one.
+MAX_ALTERNATIVE_PATHS = 3
+
+
+def graph_from_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
+    """
+    Rebuilds a NetworkX graph from a saved scenario (shaped like
+    `persistence_service.scenario_to_dict`), with the same `role` and `weight`
+    attributes the built-in network uses, so every algorithm runs unchanged.
+    """
+    graph = nx.Graph()
+    costs: dict[str, int] = {}
+    for node in scenario["nodes"]:
+        graph.add_node(node["id"], role=node["type"])
+        cost = (node.get("metadata") or {}).get("deployment_cost")
+        if isinstance(cost, (int, float)) and cost > 0:
+            costs[node["id"]] = cost
+    for edge in scenario["edges"]:
+        graph.add_edge(edge["source"], edge["target"], weight=edge["weight"])
+
+    return {
+        "graph": graph,
+        "attacker_start": scenario["attacker_start"],
+        "critical_target": scenario["critical_target"],
+        "candidates": list(scenario["honeypot_candidates"]),
+        "deployment_costs": costs,
+    }
+
+
+def alternative_paths(
+    graph: nx.Graph, start: str, target: str, honeypots: list[str], limit: int = MAX_ALTERNATIVE_PATHS
+) -> list[dict[str, Any]]:
+    """
+    The `limit` cheapest loop-free routes (Yen's algorithm via NetworkX), each
+    with its cost, hop count, and which deployed honeypots it passes through.
+
+    This is deterministic graph enumeration, not a learned prediction: it shows
+    the routes an attacker minimising path cost would consider next.
+    """
+    try:
+        routes = list(islice(nx.shortest_simple_paths(graph, start, target, weight="weight"), limit))
+    except (nx.NetworkXNoPath, nx.NodeNotFound):
+        return []
+
+    result = []
+    for rank, route in enumerate(routes, start=1):
+        cost = sum(graph[a][b]["weight"] for a, b in zip(route, route[1:]))
+        covered = [node for node in route if node in honeypots]
+        result.append(
+            {
+                "rank": rank,
+                "path": route,
+                "cost": cost,
+                "hops": len(route) - 1,
+                "honeypots_on_path": covered,
+                "intercepted": bool(covered),
+            }
+        )
+    return result
+
+
 def run_simulation(
     algorithm: str = "A*",
     start_node: str | None = None,
     target_node: str | None = None,
     honeypot_count: int = 2,
+    scenario: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Runs one attacker-vs-defender simulation and returns structured data.
 
     Mirrors the pipeline in `simulation.simulator.run_full_simulation`, but
     parameterized by start/target so the API can explore other scenarios.
+    When `scenario` is given (a saved topology), it replaces the built-in network.
     Raises UnknownNodeError / UnsupportedAlgorithmError on bad input.
     """
     if algorithm not in ALGORITHMS:
         raise UnsupportedAlgorithmError(algorithm)
 
-    graph = build_network()
+    if scenario is None:
+        graph = build_network()
+        default_start, default_target = ATTACKER_START, CRITICAL_TARGET
+        candidates = honeypot_candidates(graph)
+        deployment_costs = None
+    else:
+        built = graph_from_scenario(scenario)
+        graph = built["graph"]
+        default_start, default_target = built["attacker_start"], built["critical_target"]
+        candidates = built["candidates"]
+        deployment_costs = built["deployment_costs"]
     known_nodes = list(graph.nodes)
 
-    start = start_node or ATTACKER_START
-    target = target_node or CRITICAL_TARGET
+    start = start_node or default_start
+    target = target_node or default_target
     for node in (start, target):
         if node not in graph:
             raise UnknownNodeError(node, known_nodes)
@@ -121,9 +197,11 @@ def run_simulation(
     honeypot_table, selected_honeypots = plan_defense(
         graph,
         candidate_paths,
-        candidates=honeypot_candidates(graph),
+        # The defender never disguises the asset it protects or the entry point.
+        candidates=[node for node in candidates if node not in (start, target)],
         target=target,
         top_n=honeypot_count,
+        deployment_costs=deployment_costs,
     )
 
     # 3. Outcome and explanations, reusing the prototype's logic unchanged.
@@ -131,7 +209,7 @@ def run_simulation(
         attacker_decision["path"], selected_honeypots
     )
     explanation = generate_explanations(
-        attacker_decision, selected_honeypots, honeypot_table, intercepted, hit_node
+        attacker_decision, selected_honeypots, honeypot_table, intercepted, hit_node, target=target
     )
 
     if not attacker_decision["path"]:
@@ -161,5 +239,7 @@ def run_simulation(
         "intercepted_at": hit_node,
         "intercepted_at_step": hit_index,
         "algorithm_comparison": comparison,
+        "alternative_paths": alternative_paths(graph, start, target, selected_honeypots),
+        "scenario_id": scenario["id"] if scenario else None,
         "explanation": explanation,
     }

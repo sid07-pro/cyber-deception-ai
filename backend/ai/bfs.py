@@ -14,6 +14,9 @@ def bfs_search(graph, start, goal):
     cost: sum of edge weights along the returned path
     nodes_explored: number of nodes popped/visited during search
     """
+    if start not in graph or goal not in graph:
+        return [], 0, 0
+
     frontier = deque([start])
     visited = {start}
     parent = {start: None}

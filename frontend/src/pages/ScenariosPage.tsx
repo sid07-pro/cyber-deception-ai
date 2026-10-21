@@ -11,13 +11,25 @@ import {
   deleteScenario,
   listScenarios,
   listStoredExperiments,
+  runSimulation,
   saveCurrentNetwork,
 } from '../api/client'
 import {
   STRATEGY_LABELS,
   type ScenarioSummary,
+  type SearchAlgorithm,
+  type SimulationResponse,
   type StoredExperimentSummary,
 } from '../api/types'
+import { ResultPanel } from '../components/ResultPanel'
+
+const ALGORITHMS: SearchAlgorithm[] = ['BFS', 'DFS', 'UCS', 'A*']
+
+type RunState =
+  | { kind: 'idle' }
+  | { kind: 'running'; scenarioId: number }
+  | { kind: 'done'; scenario: ScenarioSummary; result: SimulationResponse }
+  | { kind: 'error'; scenario: ScenarioSummary; message: string }
 
 type ListState<T> =
   | { kind: 'loading' }
@@ -42,6 +54,8 @@ export function ScenariosPage() {
   const [description, setDescription] = useState('')
   const [saveError, setSaveError] = useState<string | null>(null)
   const [isSaving, setSaving] = useState(false)
+  const [algorithm, setAlgorithm] = useState<SearchAlgorithm>('A*')
+  const [run, setRun] = useState<RunState>({ kind: 'idle' })
 
   const refresh = useCallback(() => {
     listScenarios()
@@ -74,9 +88,19 @@ export function ScenariosPage() {
   }
 
   const handleDelete = (scenarioId: number) => {
+    if ((run.kind === 'done' || run.kind === 'error') && run.scenario.id === scenarioId) {
+      setRun({ kind: 'idle' })
+    }
     deleteScenario(scenarioId)
       .then(refresh)
       .catch((error: unknown) => setSaveError(message(error)))
+  }
+
+  const handleSimulate = (scenario: ScenarioSummary) => {
+    setRun({ kind: 'running', scenarioId: scenario.id })
+    runSimulation({ algorithm, scenario_id: scenario.id })
+      .then((result) => setRun({ kind: 'done', scenario, result }))
+      .catch((error: unknown) => setRun({ kind: 'error', scenario, message: message(error) }))
   }
 
   return (
@@ -128,7 +152,24 @@ export function ScenariosPage() {
       </section>
 
       <section className="rounded-lg border border-slate-700 bg-slate-900 p-4">
-        <h2 className="font-semibold text-slate-100">Saved scenarios</h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="font-semibold text-slate-100">Saved scenarios</h2>
+          <label className="ml-auto flex items-center gap-2 text-sm text-slate-400">
+            Simulate with
+            <select
+              aria-label="Scenario simulation algorithm"
+              className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-slate-100"
+              value={algorithm}
+              onChange={(event) => setAlgorithm(event.target.value as SearchAlgorithm)}
+            >
+              {ALGORITHMS.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         {scenarios.kind === 'loading' && (
           <p className="mt-2 text-sm text-slate-400">Loading saved scenarios…</p>
@@ -162,9 +203,20 @@ export function ScenariosPage() {
                   </span>
                   <button
                     type="button"
+                    onClick={() => handleSimulate(scenario)}
+                    disabled={run.kind === 'running'}
+                    aria-label={`Simulate ${scenario.name}`}
+                    className="ml-auto rounded border border-emerald-800 px-2 py-1 text-xs text-emerald-300 hover:bg-emerald-950 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {run.kind === 'running' && run.scenarioId === scenario.id
+                      ? 'Simulating…'
+                      : 'Simulate'}
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => handleDelete(scenario.id)}
                     aria-label={`Delete ${scenario.name}`}
-                    className="ml-auto rounded border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:border-red-700 hover:text-red-400"
+                    className="rounded border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:border-red-700 hover:text-red-400"
                   >
                     Delete
                   </button>
@@ -181,6 +233,26 @@ export function ScenariosPage() {
           </ul>
         )}
       </section>
+
+      {run.kind === 'error' && (
+        <div className="rounded border border-red-800 bg-slate-950 p-3">
+          <p className="font-semibold text-red-400">
+            Could not simulate &ldquo;{run.scenario.name}&rdquo;
+          </p>
+          <p className="mt-1 text-sm text-slate-400">{run.message}</p>
+        </div>
+      )}
+
+      {run.kind === 'done' && (
+        <div className="space-y-2">
+          <p className="text-sm text-slate-400">
+            Simulation on saved scenario{' '}
+            <span className="font-medium text-slate-200">{run.scenario.name}</span> (
+            {run.result.start_node} → {run.result.target_node}). Simulated data only.
+          </p>
+          <ResultPanel result={run.result} />
+        </div>
+      )}
 
       <section className="rounded-lg border border-slate-700 bg-slate-900 p-4">
         <h2 className="font-semibold text-slate-100">Experiment history</h2>

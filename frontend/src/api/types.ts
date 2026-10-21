@@ -38,6 +38,8 @@ export interface SimulationRequest {
   start_node?: string | null
   target_node?: string | null
   honeypot_count?: number
+  /** Run on a saved scenario's topology instead of the built-in network. */
+  scenario_id?: number | null
 }
 
 export interface HoneypotScore {
@@ -57,6 +59,15 @@ export interface AlgorithmComparison {
   nodes_explored: number
 }
 
+export interface AlternativePath {
+  rank: number
+  path: string[]
+  cost: number
+  hops: number
+  honeypots_on_path: string[]
+  intercepted: boolean
+}
+
 export interface SimulationResponse {
   algorithm: SearchAlgorithm
   start_node: string
@@ -70,6 +81,10 @@ export interface SimulationResponse {
   intercepted_at: string | null
   intercepted_at_step: number | null
   algorithm_comparison: AlgorithmComparison[]
+  /** Up to three cheapest loop-free routes, ranked by cost. */
+  alternative_paths?: AlternativePath[]
+  /** Saved scenario the run used; null for the built-in network. */
+  scenario_id?: number | null
   explanation: string[]
 }
 

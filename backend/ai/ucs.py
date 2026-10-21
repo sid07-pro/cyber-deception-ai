@@ -12,6 +12,9 @@ def ucs_search(graph, start, goal):
     """
     Returns (path, cost, nodes_explored).
     """
+    if start not in graph or goal not in graph:
+        return [], 0, 0
+
     # Priority queue entries: (cumulative_cost, tie_breaker, node, path)
     counter = 0
     frontier = [(0, counter, start, [start])]

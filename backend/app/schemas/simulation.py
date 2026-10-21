@@ -46,6 +46,11 @@ class SimulationRequest(BaseModel):
         le=5,
         description="How many honeypots the defender agent deploys.",
     )
+    scenario_id: int | None = Field(
+        default=None,
+        ge=1,
+        description="Run on a saved scenario's topology instead of the built-in network.",
+    )
 
 
 class HoneypotScore(BaseModel):
@@ -67,6 +72,19 @@ class AlgorithmComparison(BaseModel):
     path: list[str]
     cost: int
     nodes_explored: int
+
+
+class AlternativePath(BaseModel):
+    """One of the cheapest loop-free routes, ranked by total edge cost."""
+
+    rank: int = Field(description="1 is the cheapest route.")
+    path: list[str]
+    cost: int
+    hops: int
+    honeypots_on_path: list[str] = Field(
+        description="Deployed honeypots this route passes through, in order."
+    )
+    intercepted: bool = Field(description="Whether this route would hit a deployed honeypot.")
 
 
 class SimulationResponse(BaseModel):
@@ -96,5 +114,12 @@ class SimulationResponse(BaseModel):
     algorithm_comparison: list[AlgorithmComparison] = Field(
         default_factory=list,
         description="All four search algorithms run on the same scenario.",
+    )
+    alternative_paths: list[AlternativePath] = Field(
+        default_factory=list,
+        description="Up to three cheapest routes, so coverage can be checked beyond the chosen one.",
+    )
+    scenario_id: int | None = Field(
+        default=None, description="Saved scenario the run used, or null for the built-in network."
     )
     explanation: list[str] = Field(description="Human-readable account of each AI decision.")

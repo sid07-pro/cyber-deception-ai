@@ -10,6 +10,9 @@ def dfs_search(graph, start, goal):
     Returns (path, cost, nodes_explored).
     Iterative DFS using an explicit stack to avoid recursion limits.
     """
+    if start not in graph or goal not in graph:
+        return [], 0, 0
+
     stack = [(start, [start])]
     visited = set()
     nodes_explored = 0

@@ -62,7 +62,9 @@ def run_full_simulation(attacker_strategy="A*", top_n_honeypots=2):
     }
 
 
-def _generate_explanations(attacker_decision, honeypots, honeypot_table, intercepted, hit_node):
+def _generate_explanations(
+    attacker_decision, honeypots, honeypot_table, intercepted, hit_node, target=CRITICAL_TARGET
+):
     """Builds dynamic, simulation-specific explanation strings."""
     explanations = []
 
@@ -70,7 +72,12 @@ def _generate_explanations(attacker_decision, honeypots, honeypot_table, interce
     path = attacker_decision["path"]
     cost = attacker_decision["cost"]
 
-    if strategy == "A*":
+    if not path:
+        explanations.append(
+            f"The attacker agent ran {strategy} but the search exhausted every reachable node "
+            "without finding a path to the target."
+        )
+    elif strategy == "A*":
         explanations.append(
             f"The attacker agent used A* search, evaluating f(n) = g(n) + h(n) at each step, "
             f"and selected the path {' → '.join(path)} with total cost {cost}."
@@ -96,18 +103,23 @@ def _generate_explanations(attacker_decision, honeypots, honeypot_table, interce
         )
         explanations.append(
             f"Honeypots were deployed at {', '.join(honeypots)} — positioned along likely attacker "
-            f"routes but never on the critical Database node itself, preserving deception realism."
+            f"routes but never on the critical {target} node itself, preserving deception realism."
         )
 
-    if intercepted:
+    if not path:
+        explanations.append(
+            f"No route exists from the attacker's entry point to the critical {target}, so the "
+            "asset is unreachable in this topology and no interception was needed."
+        )
+    elif intercepted:
         explanations.append(
             f"During simulation, the attacker's path passed through {hit_node}, which was configured "
-            f"as a honeypot. The attacker was deceived before reaching the critical Database."
+            f"as a honeypot. The attacker was deceived before reaching the critical {target}."
         )
     else:
         explanations.append(
             "During simulation, the attacker's chosen path did not pass through any deployed "
-            "honeypot, so the critical Database was reached. This indicates the defender's "
+            f"honeypot, so the critical {target} was reached. This indicates the defender's "
             "placement should be reconsidered for this attack strategy."
         )
 

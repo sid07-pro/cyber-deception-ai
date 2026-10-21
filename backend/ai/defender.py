@@ -7,7 +7,7 @@ then evaluates whether a given attacker path is intercepted.
 from ai.optimizer import score_candidates
 
 
-def plan_defense(graph, candidate_paths, candidates, target, top_n=2):
+def plan_defense(graph, candidate_paths, candidates, target, top_n=2, deployment_costs=None):
     """
     Runs the honeypot placement optimizer.
 
@@ -16,7 +16,9 @@ def plan_defense(graph, candidate_paths, candidates, target, top_n=2):
 
     Returns (scored_table, selected_honeypots).
     """
-    return score_candidates(graph, candidate_paths, candidates, target, top_n=top_n)
+    return score_candidates(
+        graph, candidate_paths, candidates, target, top_n=top_n, deployment_costs=deployment_costs
+    )
 
 
 def evaluate_interception(attacker_path, honeypots):

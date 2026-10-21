@@ -1,6 +1,7 @@
 /**
  * ResultPanel.tsx
- * Renders one simulation result: decision summary, honeypot scoring, explanation.
+ * Renders one simulation result: decision summary, honeypot scoring,
+ * alternative routes, and explanation.
  */
 
 import type { SimulationResponse } from '../api/types'
@@ -87,6 +88,42 @@ export function ResultPanel({ result }: { result: SimulationResponse }) {
                   <td className="py-1 text-right tabular-nums">{row.node_connectivity}</td>
                   <td className="py-1 text-right tabular-nums">{row.deployment_cost}</td>
                   <td className="py-1 text-right tabular-nums">{row.deception_score}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {result.alternative_paths && result.alternative_paths.length > 0 && (
+        <div className="mt-4 overflow-x-auto">
+          <h3 className="text-sm font-medium text-slate-400">Cheapest alternative routes</h3>
+          <p className="mt-1 text-xs text-slate-500">
+            Enumerated from the graph by total edge cost — a coverage check, not a learned
+            prediction.
+          </p>
+          <table className="mt-2 w-full min-w-[420px] text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase text-slate-500">
+                <th className="py-1 font-medium">#</th>
+                <th className="py-1 font-medium">Route</th>
+                <th className="py-1 text-right font-medium">Cost</th>
+                <th className="py-1 text-right font-medium">Covered by</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.alternative_paths.map((route) => (
+                <tr key={route.rank} className="border-t border-slate-800 text-slate-300">
+                  <td className="py-1 tabular-nums">{route.rank}</td>
+                  <td className="py-1">{route.path.join(' → ')}</td>
+                  <td className="py-1 text-right tabular-nums">{route.cost}</td>
+                  <td
+                    className={`py-1 text-right ${
+                      route.intercepted ? 'text-amber-300' : 'text-red-400'
+                    }`}
+                  >
+                    {route.intercepted ? route.honeypots_on_path.join(', ') : 'Uncovered'}
+                  </td>
                 </tr>
               ))}
             </tbody>
