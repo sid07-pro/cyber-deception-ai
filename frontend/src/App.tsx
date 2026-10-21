@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { getNetwork } from './api/client'
+import { getNetwork, isApiBaseUrlMissing, MISSING_API_URL_MESSAGE } from './api/client'
 import type { NetworkResponse } from './api/types'
 import { AdvancedAIPanel } from './components/AdvancedAIPanel'
 import { ExperimentLab } from './components/ExperimentLab'
@@ -97,6 +97,15 @@ export default function App() {
           </nav>
         </div>
       </header>
+
+      {isApiBaseUrlMissing() && (
+        <div className="border-b border-amber-800 bg-amber-950/40">
+          <p className="mx-auto max-w-6xl px-6 py-3 text-sm text-amber-300">
+            <strong className="font-semibold">Backend not configured.</strong>{' '}
+            {MISSING_API_URL_MESSAGE}
+          </p>
+        </div>
+      )}
 
       <main className="mx-auto max-w-6xl px-6 py-8">
         <Content

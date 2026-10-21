@@ -5,7 +5,12 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getNetwork, runSimulation } from './client'
+import {
+  getNetwork,
+  isApiBaseUrlMissing,
+  MISSING_API_URL_MESSAGE,
+  runSimulation,
+} from './client'
 
 function mockFetch(response: { ok: boolean; status: number; body: unknown }) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -57,5 +62,24 @@ describe('runSimulation', () => {
     mockFetch({ ok: false, status: 404, body: { detail: "Unknown node 'Mainframe'." } })
 
     await expect(runSimulation({ algorithm: 'BFS' })).rejects.toThrow("Unknown node 'Mainframe'.")
+  })
+})
+
+describe('production configuration', () => {
+  it('exposes a clear message naming the variable to set', () => {
+    expect(MISSING_API_URL_MESSAGE).toContain('VITE_API_BASE_URL')
+  })
+
+  it('is satisfied in development, where the dev proxy handles /api', () => {
+    // import.meta.env.PROD is false under vitest, matching `npm run dev`.
+    expect(isApiBaseUrlMissing()).toBe(false)
+  })
+
+  it('sends requests to a relative /api path when no base URL is set', async () => {
+    const fetchMock = mockFetch({ ok: true, status: 200, body: {} })
+
+    await getNetwork()
+
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/network')
   })
 })

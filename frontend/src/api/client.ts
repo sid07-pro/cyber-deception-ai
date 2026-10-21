@@ -2,8 +2,13 @@
  * client.ts
  * Minimal typed fetch wrapper for the backend API.
  *
- * When VITE_API_BASE_URL is empty the requests go to the same origin and are
- * forwarded by the Vite dev proxy to the FastAPI server.
+ * In development VITE_API_BASE_URL is empty: requests go to the same origin and
+ * the Vite dev proxy forwards /api to the FastAPI server.
+ *
+ * In a production build the frontend and backend are on different hosts, so
+ * VITE_API_BASE_URL must point at the deployed API. If it is missing, every
+ * request fails immediately with an explanatory message rather than silently
+ * hitting the frontend's own origin and returning HTML.
  */
 
 import type {
@@ -25,7 +30,25 @@ import type {
   StoredExperimentSummary,
 } from './types'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
+const RAW_API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
+
+// No trailing slash: paths are joined as `${base}/api/...`.
+const API_BASE_URL = RAW_API_BASE_URL.trim().replace(/\/+$/, '')
+
+export const MISSING_API_URL_MESSAGE =
+  'This deployment has no backend URL configured. Set VITE_API_BASE_URL to the ' +
+  'deployed API (for example https://your-api.onrender.com) and redeploy the frontend.'
+
+/** True when a production build was shipped without a backend URL. */
+export function isApiBaseUrlMissing(): boolean {
+  return import.meta.env.PROD && API_BASE_URL === ''
+}
+
+function assertConfigured(): void {
+  if (isApiBaseUrlMissing()) {
+    throw new Error(MISSING_API_URL_MESSAGE)
+  }
+}
 
 export interface HealthResponse {
   status: string
@@ -47,6 +70,7 @@ async function toError(response: Response, path: string): Promise<Error> {
 }
 
 export async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> {
+  assertConfigured()
   const response = await fetch(`${API_BASE_URL}/api${path}`, { signal })
 
   if (!response.ok) {
@@ -61,6 +85,7 @@ export async function apiPost<T>(
   body: unknown,
   signal?: AbortSignal,
 ): Promise<T> {
+  assertConfigured()
   const response = await fetch(`${API_BASE_URL}/api${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -158,6 +183,7 @@ export function getScenario(
 }
 
 export async function deleteScenario(scenarioId: number, signal?: AbortSignal): Promise<void> {
+  assertConfigured()
   const response = await fetch(`${API_BASE_URL}/api/scenarios/${scenarioId}`, {
     method: 'DELETE',
     signal,

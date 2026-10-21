@@ -1,0 +1,32 @@
+# Render blueprint: backend API + managed PostgreSQL.
+# The frontend is deployed separately on Vercel.
+#
+# Create with: Render Dashboard -> New -> Blueprint -> point at this repository.
+services:
+  - type: web
+    name: cyber-deception-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.6"
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cyber-deception-db
+          property: connectionString
+      # Set this to the Vercel URL after the frontend is deployed.
+      # No trailing slash.
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+databases:
+  - name: cyber-deception-db
+    plan: free
+    databaseName: cyber_deception
+    user: cda

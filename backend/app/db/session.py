@@ -33,11 +33,14 @@ def _engine_options(url: str) -> dict:
     # SQLite (used by the tests) needs a same-thread escape hatch.
     if url.startswith("sqlite"):
         return {"connect_args": {"check_same_thread": False}}
-    return {"pool_pre_ping": True}
+    # Managed PostgreSQL closes idle connections; pre-ping and recycle so a
+    # dropped connection is replaced instead of surfacing as a 500.
+    return {"pool_pre_ping": True, "pool_recycle": 300, "pool_size": 5, "max_overflow": 5}
 
 
 settings = get_settings()
-engine = create_engine(settings.database_url, future=True, **_engine_options(settings.database_url))
+DATABASE_URL = settings.sqlalchemy_url
+engine = create_engine(DATABASE_URL, future=True, **_engine_options(DATABASE_URL))
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False, future=True)
 
 

@@ -24,6 +24,8 @@ services:
     environment:
       CORS_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173"
       DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER:-cda}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-cyber_deception}"
+    # The image's production CMD has no --reload; local development wants it.
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       # The backend creates its tables at startup, so wait for a live database.
       db:

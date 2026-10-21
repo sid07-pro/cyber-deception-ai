@@ -13,6 +13,8 @@ const getNetwork = vi.fn()
 
 vi.mock('./api/client', () => ({
   getNetwork: (...args: unknown[]) => getNetwork(...args),
+  isApiBaseUrlMissing: () => false,
+  MISSING_API_URL_MESSAGE: 'set VITE_API_BASE_URL',
   getHealth: vi.fn().mockResolvedValue({ status: 'ok', service: 'cyber-deception-ai', version: '0.1.0' }),
   runSimulation: vi.fn(),
   startSession: vi.fn(),
