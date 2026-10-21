@@ -22,7 +22,7 @@ type PlanState =
   | { kind: 'error'; message: string }
 
 const SELECT_CLASS =
-  'mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-slate-100'
+  'field'
 
 const METHOD_LABELS: Record<PlanningMethod, string> = {
   forward: 'Forward search',
@@ -55,12 +55,12 @@ export function PlanningPanel({ settings }: { settings: SimulationSettings }) {
   }
 
   return (
-    <section className="rounded-lg border border-slate-700 bg-slate-900 p-4">
-      <h2 className="font-semibold text-slate-100">Defensive planning</h2>
+    <section className="panel p-4">
+      <h2 className="panel-title">Defensive planning</h2>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <label className="text-sm">
-          <span className="text-slate-400">Method</span>
+          <span className="text-fg-muted">Method</span>
           <select
             aria-label="Planning method"
             className={SELECT_CLASS}
@@ -76,7 +76,7 @@ export function PlanningPanel({ settings }: { settings: SimulationSettings }) {
         </label>
 
         <label className="text-sm">
-          <span className="text-slate-400">Goal</span>
+          <span className="text-fg-muted">Goal</span>
           <select
             aria-label="Goal"
             className={SELECT_CLASS}
@@ -92,7 +92,7 @@ export function PlanningPanel({ settings }: { settings: SimulationSettings }) {
         </label>
 
         <label className="text-sm">
-          <span className="text-slate-400">Max depth</span>
+          <span className="text-fg-muted">Max depth</span>
           <select
             aria-label="Max depth"
             className={SELECT_CLASS}
@@ -112,25 +112,25 @@ export function PlanningPanel({ settings }: { settings: SimulationSettings }) {
         type="button"
         onClick={handlePlan}
         disabled={state.kind === 'loading'}
-        className="mt-4 rounded bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-500 disabled:cursor-not-allowed disabled:bg-slate-700"
+        className="mt-4 btn-primary"
       >
         {state.kind === 'loading' ? 'Planning…' : 'Generate Plan'}
       </button>
 
       {state.kind === 'idle' && (
-        <p className="mt-3 text-sm text-slate-400">
+        <p className="mt-3 text-sm text-fg-muted">
           No plan yet. Choose a goal and select Generate Plan.
         </p>
       )}
 
       {state.kind === 'loading' && (
-        <p className="mt-3 text-sm text-slate-400">Searching for a defensive plan…</p>
+        <p className="mt-3 text-sm text-fg-muted">Searching for a defensive plan…</p>
       )}
 
       {state.kind === 'error' && (
-        <div className="mt-3 rounded border border-red-800 bg-slate-950 p-3">
-          <p className="font-semibold text-red-400">Planning failed</p>
-          <p className="mt-1 text-sm text-slate-400">{state.message}</p>
+        <div className="mt-3 rounded border border-bad/40 bg-well p-3">
+          <p className="notice-error-title">Planning failed</p>
+          <p className="mt-1 text-sm text-fg-muted">{state.message}</p>
         </div>
       )}
 
@@ -142,16 +142,16 @@ export function PlanningPanel({ settings }: { settings: SimulationSettings }) {
 function PlanView({ plan }: { plan: PlanResponse }) {
   return (
     <div
-      className={`mt-4 rounded border bg-slate-950 p-3 ${
-        plan.success ? 'border-teal-900' : 'border-slate-700'
+      className={`mt-4 rounded border bg-well p-3 ${
+        plan.success ? 'border-line' : 'border-line'
       }`}
     >
-      <p className={plan.success ? 'font-semibold text-teal-300' : 'font-semibold text-slate-300'}>
+      <p className={plan.success ? 'font-semibold text-gold-champagne' : 'font-semibold text-fg-soft'}>
         {plan.success
           ? `Plan found — ${plan.plan_length} action(s), cost ${plan.plan_cost}`
           : `No plan found — ${plan.reason}`}
       </p>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-fg-muted">
         Goal: {plan.goal} · {plan.explored_states} state(s) explored
       </p>
 
@@ -160,11 +160,11 @@ function PlanView({ plan }: { plan: PlanResponse }) {
           {plan.actions.map((action, index) => (
             <li
               key={`${index}-${action.description}`}
-              className="flex items-center gap-3 rounded border border-slate-800 bg-slate-900 px-3 py-2 text-sm"
+              className="flex items-center gap-3 rounded border border-line-soft bg-panel px-3 py-2 text-sm"
             >
-              <span className="tabular-nums text-slate-600">{index + 1}</span>
-              <span className="text-slate-200">{action.description}</span>
-              <span className="ml-auto tabular-nums text-xs text-slate-500">
+              <span className="tabular-nums text-fg-faint">{index + 1}</span>
+              <span className="text-fg">{action.description}</span>
+              <span className="ml-auto tabular-nums text-xs text-fg-faint">
                 cost {action.cost}
               </span>
             </li>
@@ -172,7 +172,7 @@ function PlanView({ plan }: { plan: PlanResponse }) {
         </ol>
       )}
 
-      <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-300">
+      <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-fg-soft">
         {plan.explanation.map((line) => (
           <li key={line}>{line}</li>
         ))}

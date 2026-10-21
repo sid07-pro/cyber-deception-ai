@@ -15,7 +15,7 @@ import type {
   SimulationStateResponse,
 } from '../api/types'
 import { EventTimeline } from './EventTimeline'
-import { NetworkGraph } from './NetworkGraph'
+import { GraphLegend, NetworkGraph } from './NetworkGraph'
 import { HistoryList, type HistoryEntry } from './HistoryList'
 import { ResultPanel } from './ResultPanel'
 import { SimulationControls, type SimulationSettings } from './SimulationControls'
@@ -33,21 +33,30 @@ interface SimulationPanelProps {
   network: NetworkResponse
   settings: SimulationSettings
   onSettingsChange: (settings: SimulationSettings) => void
+  /** Lifted history (shared with the dashboard); falls back to local state. */
+  history?: HistoryEntry[]
+  onRecord?: (entry: HistoryEntry) => void
 }
 
 export function SimulationPanel({
   network,
   settings,
   onSettingsChange,
+  history: sharedHistory,
+  onRecord,
 }: SimulationPanelProps) {
   const [runState, setRunState] = useState<RunState>({ kind: 'idle' })
-  const [history, setHistory] = useState<HistoryEntry[]>([])
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [localHistory, setLocalHistory] = useState<HistoryEntry[]>([])
+  const [selectedId, setSelectedId] = useState<number | null>(sharedHistory?.[0]?.id ?? null)
   const [session, setSession] = useState<SimulationStateResponse | null>(null)
   const [isSessionBusy, setSessionBusy] = useState(false)
 
+  const history = sharedHistory ?? localHistory
+
   const handleRun = () => {
     setRunState({ kind: 'running' })
+    // A one-shot run takes over the graph from any stepped session.
+    setSession(null)
     runSimulation({
       algorithm: settings.algorithm,
       start_node: settings.startNode,
@@ -61,7 +70,8 @@ export function SimulationPanel({
           result,
         }
         // Session-only history; nothing is persisted anywhere.
-        setHistory((current) => [entry, ...current].slice(0, MAX_HISTORY))
+        if (onRecord) onRecord(entry)
+        else setLocalHistory((current) => [entry, ...current].slice(0, MAX_HISTORY))
         setSelectedId(entry.id)
         setRunState({ kind: 'idle' })
       })
@@ -116,74 +126,109 @@ export function SimulationPanel({
         attackerPosition: null,
       }
 
+  const graphSource = session
+    ? `Stepped session · step ${session.time_step}`
+    : result
+      ? `${result.algorithm} result · ${selected?.ranAt ?? ''}`
+      : 'No analysis yet'
+
   return (
-    <div className="space-y-6">
-      <section className="space-y-2">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-semibold text-slate-100">Network topology</h2>
-          <p className="text-sm text-slate-400">
-            Attacker start <span className="text-slate-200">{network.attacker_start}</span> ·
-            critical asset <span className="text-slate-200">{network.critical_target}</span>
-          </p>
-        </div>
-        <NetworkGraph network={network} {...highlight} />
-      </section>
+    <div className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="space-y-5">
+        <SimulationControls
+          nodeNames={network.nodes.map((node) => node.name)}
+          settings={settings}
+          onChange={onSettingsChange}
+          onRun={handleRun}
+          isRunning={runState.kind === 'running'}
+        />
 
-      <SimulationControls
-        nodeNames={network.nodes.map((node) => node.name)}
-        settings={settings}
-        onChange={onSettingsChange}
-        onRun={handleRun}
-        isRunning={runState.kind === 'running'}
-      />
+        <StepControls
+          session={session}
+          isBusy={isSessionBusy}
+          onStart={handleStart}
+          onStep={handleStep}
+          onReset={handleReset}
+        />
 
-      <StepControls
-        session={session}
-        isBusy={isSessionBusy}
-        onStart={handleStart}
-        onStep={handleStep}
-        onReset={handleReset}
-      />
+        <HistoryList
+          entries={history}
+          selectedId={selectedId}
+          onSelect={(id) => {
+            setSession(null)
+            setSelectedId(id)
+          }}
+        />
+      </div>
 
-      {runState.kind === 'error' && (
-        <div className="rounded-lg border border-red-800 bg-slate-900 p-4">
-          <p className="font-semibold text-red-400">Simulation failed</p>
-          <p className="mt-1 text-sm text-slate-400">{runState.message}</p>
-        </div>
-      )}
-
-      {runState.kind === 'running' && (
-        <div className="rounded-lg border border-slate-700 bg-slate-900 p-4">
-          <p className="text-slate-400">Running simulation…</p>
-        </div>
-      )}
-
-      {session && session.explanation.length > 0 && (
-        <section className="rounded-lg border border-slate-700 bg-slate-900 p-4">
-          <h2 className="font-semibold text-slate-100">Agent decisions</h2>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-300">
-            {session.explanation.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <EventTimeline events={session?.events ?? []} />
-
-      {result ? (
-        <ResultPanel result={result} />
-      ) : (
-        runState.kind === 'idle' && (
-          <div className="rounded-lg border border-slate-700 bg-slate-900 p-4">
-            <p className="text-slate-400">
-              No result yet. Choose a strategy and select Run Simulation.
-            </p>
+      <div className="min-w-0 space-y-5">
+        <section className="panel">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
+            <div>
+              <h2 className="panel-title">Network topology</h2>
+              <p className="panel-subtitle">
+                Entry <span className="text-fg-soft">{settings.startNode || network.attacker_start}</span>
+                {' · '}target <span className="text-fg-soft">{settings.targetNode || network.critical_target}</span>
+              </p>
+            </div>
+            <span className="eyebrow">{graphSource}</span>
           </div>
-        )
-      )}
+          <div className="p-3">
+            <NetworkGraph
+              network={network}
+              startNode={settings.startNode}
+              targetNode={settings.targetNode}
+              {...highlight}
+            />
+            <div className="mt-3 px-1">
+              <GraphLegend />
+            </div>
+          </div>
+        </section>
 
-      <HistoryList entries={history} selectedId={selectedId} onSelect={setSelectedId} />
+        {runState.kind === 'error' && (
+          <div className="notice-error" role="alert">
+            <p className="notice-error-title">Simulation failed</p>
+            <p className="mt-1 text-sm text-fg-muted">{runState.message}</p>
+          </div>
+        )}
+
+        {runState.kind === 'running' && (
+          <div className="panel p-4" role="status">
+            <p className="text-sm text-fg-muted">Running simulation…</p>
+            <div className="loading-bar mt-3 h-px bg-line" />
+          </div>
+        )}
+
+        {session && session.explanation.length > 0 && (
+          <section className="panel p-4">
+            <h2 className="panel-title">Agent decisions</h2>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-fg-soft marker:text-gold-muted">
+              {session.explanation.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {session && <EventTimeline events={session.events} />}
+
+        {result && !session ? (
+          <ResultPanel result={result} />
+        ) : (
+          runState.kind === 'idle' &&
+          !session && (
+            <div className="panel border-dashed p-6 text-center">
+              <p className="text-sm text-fg-muted">
+                No result yet. Choose a strategy and select Run Simulation.
+              </p>
+              <p className="mt-1 text-xs text-fg-faint">
+                The attacker route, deception scoring, and alternative routes appear here.
+              </p>
+            </div>
+          )
+        )}
+      </div>
     </div>
   )
 }

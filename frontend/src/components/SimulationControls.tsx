@@ -1,6 +1,7 @@
 /**
  * SimulationControls.tsx
- * Selectors for the attacker strategy, endpoints, and deception settings.
+ * Analysis configuration: attacker search strategy, endpoints, and the
+ * defender's honeypot budget.
  */
 
 import { SEARCH_ALGORITHMS, type SearchAlgorithm } from '../api/types'
@@ -20,8 +21,12 @@ interface SimulationControlsProps {
   isRunning: boolean
 }
 
-const SELECT_CLASS =
-  'mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-slate-100'
+const STRATEGY_NOTES: Record<SearchAlgorithm, string> = {
+  BFS: 'Fewest hops; ignores edge cost.',
+  DFS: 'Deepest branch first; no optimality guarantee.',
+  UCS: 'Lowest cumulative cost; optimal.',
+  'A*': 'Cost plus admissible hop heuristic; optimal.',
+}
 
 export function SimulationControls({
   nodeNames,
@@ -32,16 +37,25 @@ export function SimulationControls({
 }: SimulationControlsProps) {
   const update = (patch: Partial<SimulationSettings>) => onChange({ ...settings, ...patch })
 
-  return (
-    <section className="rounded-lg border border-slate-700 bg-slate-900 p-4">
-      <h2 className="font-semibold text-slate-100">Simulation controls</h2>
+  const missing = !settings.startNode || !settings.targetNode
+  const sameEndpoints = !missing && settings.startNode === settings.targetNode
+  const invalidReason = missing
+    ? 'Choose a start and a target node.'
+    : sameEndpoints
+      ? 'Start and target must be different nodes.'
+      : null
 
-      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="text-sm">
-          <span className="text-slate-400">Algorithm</span>
+  return (
+    <section className="panel p-4">
+      <h2 className="panel-title">Analysis configuration</h2>
+      <p className="panel-subtitle">Simulation controls for the attacker and defender agents.</p>
+
+      <div className="mt-4 space-y-3">
+        <label className="block">
+          <span className="field-label">Search strategy</span>
           <select
             aria-label="Algorithm"
-            className={SELECT_CLASS}
+            className="field"
             value={settings.algorithm}
             onChange={(event) => update({ algorithm: event.target.value as SearchAlgorithm })}
           >
@@ -51,45 +65,48 @@ export function SimulationControls({
               </option>
             ))}
           </select>
+          <span className="mt-1 block text-2xs text-fg-faint">{STRATEGY_NOTES[settings.algorithm]}</span>
         </label>
 
-        <label className="text-sm">
-          <span className="text-slate-400">Start node</span>
-          <select
-            aria-label="Start node"
-            className={SELECT_CLASS}
-            value={settings.startNode}
-            onChange={(event) => update({ startNode: event.target.value })}
-          >
-            {nodeNames.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className="field-label">Start node</span>
+            <select
+              aria-label="Start node"
+              className="field"
+              value={settings.startNode}
+              onChange={(event) => update({ startNode: event.target.value })}
+            >
+              {nodeNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <label className="text-sm">
-          <span className="text-slate-400">Target node</span>
-          <select
-            aria-label="Target node"
-            className={SELECT_CLASS}
-            value={settings.targetNode}
-            onChange={(event) => update({ targetNode: event.target.value })}
-          >
-            {nodeNames.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
+          <label className="block">
+            <span className="field-label">Target node</span>
+            <select
+              aria-label="Target node"
+              className="field"
+              value={settings.targetNode}
+              onChange={(event) => update({ targetNode: event.target.value })}
+            >
+              {nodeNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
-        <label className="text-sm">
-          <span className="text-slate-400">Honeypots</span>
+        <label className="block">
+          <span className="field-label">Honeypot budget</span>
           <select
             aria-label="Honeypots"
-            className={SELECT_CLASS}
+            className="field"
             value={settings.honeypotCount}
             onChange={(event) => update({ honeypotCount: Number(event.target.value) })}
           >
@@ -105,11 +122,12 @@ export function SimulationControls({
       <button
         type="button"
         onClick={onRun}
-        disabled={isRunning}
-        className="mt-4 rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700"
+        disabled={isRunning || invalidReason !== null}
+        className="btn-primary mt-4 w-full"
       >
         {isRunning ? 'Running…' : 'Run Simulation'}
       </button>
+      {invalidReason && <p className="mt-2 text-xs text-warn">{invalidReason}</p>}
     </section>
   )
 }

@@ -105,28 +105,28 @@ export function ScenariosPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-slate-700 bg-slate-900 p-4">
-        <h2 className="font-semibold text-slate-100">Save the current network</h2>
-        <p className="mt-1 text-sm text-slate-400">
+      <section className="panel p-4">
+        <h2 className="panel-title">Save the current network</h2>
+        <p className="mt-1 text-sm text-fg-muted">
           Stores the active topology, its attacker entry point, and its protected asset.
         </p>
 
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <label className="text-sm">
-            <span className="text-slate-400">Name</span>
+            <span className="text-fg-muted">Name</span>
             <input
               aria-label="Scenario name"
-              className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-slate-100"
+              className="field"
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="e.g. baseline-network"
             />
           </label>
           <label className="text-sm">
-            <span className="text-slate-400">Description</span>
+            <span className="text-fg-muted">Description</span>
             <input
               aria-label="Scenario description"
-              className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-slate-100"
+              className="field"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="optional"
@@ -138,27 +138,27 @@ export function ScenariosPage() {
           type="button"
           onClick={handleSave}
           disabled={isSaving}
-          className="mt-4 rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-700"
+          className="mt-4 btn-primary"
         >
           {isSaving ? 'Saving…' : 'Save Scenario'}
         </button>
 
         {saveError && (
-          <div className="mt-3 rounded border border-red-800 bg-slate-950 p-3">
-            <p className="font-semibold text-red-400">Could not save</p>
-            <p className="mt-1 text-sm text-slate-400">{saveError}</p>
+          <div className="mt-3 rounded border border-bad/40 bg-well p-3">
+            <p className="notice-error-title">Could not save</p>
+            <p className="mt-1 text-sm text-fg-muted">{saveError}</p>
           </div>
         )}
       </section>
 
-      <section className="rounded-lg border border-slate-700 bg-slate-900 p-4">
+      <section className="panel p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="font-semibold text-slate-100">Saved scenarios</h2>
-          <label className="ml-auto flex items-center gap-2 text-sm text-slate-400">
+          <h2 className="panel-title">Saved scenarios</h2>
+          <label className="ml-auto flex items-center gap-2 text-sm text-fg-muted">
             Simulate with
             <select
               aria-label="Scenario simulation algorithm"
-              className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-slate-100"
+              className="rounded border border-line bg-well px-2 py-1 text-fg"
               value={algorithm}
               onChange={(event) => setAlgorithm(event.target.value as SearchAlgorithm)}
             >
@@ -172,18 +172,18 @@ export function ScenariosPage() {
         </div>
 
         {scenarios.kind === 'loading' && (
-          <p className="mt-2 text-sm text-slate-400">Loading saved scenarios…</p>
+          <p className="mt-2 text-sm text-fg-muted">Loading saved scenarios…</p>
         )}
 
         {scenarios.kind === 'error' && (
-          <div className="mt-3 rounded border border-red-800 bg-slate-950 p-3">
-            <p className="font-semibold text-red-400">Could not load scenarios</p>
-            <p className="mt-1 text-sm text-slate-400">{scenarios.message}</p>
+          <div className="mt-3 rounded border border-bad/40 bg-well p-3">
+            <p className="notice-error-title">Could not load scenarios</p>
+            <p className="mt-1 text-sm text-fg-muted">{scenarios.message}</p>
           </div>
         )}
 
         {scenarios.kind === 'ready' && scenarios.items.length === 0 && (
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-fg-muted">
             Nothing saved yet. Save the current network above to start a library.
           </p>
         )}
@@ -193,11 +193,11 @@ export function ScenariosPage() {
             {scenarios.items.map((scenario) => (
               <li
                 key={scenario.id}
-                className="rounded border border-slate-800 bg-slate-950 px-3 py-2 text-sm"
+                className="rounded border border-line-soft bg-well px-3 py-2 text-sm"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium text-slate-200">{scenario.name}</span>
-                  <span className="text-xs text-slate-500">
+                  <span className="font-medium text-fg">{scenario.name}</span>
+                  <span className="text-xs text-fg-faint">
                     {scenario.node_count} nodes · {scenario.edge_count} edges ·{' '}
                     {scenario.experiment_count} experiment(s)
                   </span>
@@ -206,7 +206,7 @@ export function ScenariosPage() {
                     onClick={() => handleSimulate(scenario)}
                     disabled={run.kind === 'running'}
                     aria-label={`Simulate ${scenario.name}`}
-                    className="ml-auto rounded border border-emerald-800 px-2 py-1 text-xs text-emerald-300 hover:bg-emerald-950 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="ml-auto rounded border border-ok/40 px-2 py-1 text-xs text-gold-champagne hover:bg-gold/10 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {run.kind === 'running' && run.scenarioId === scenario.id
                       ? 'Simulating…'
@@ -216,15 +216,15 @@ export function ScenariosPage() {
                     type="button"
                     onClick={() => handleDelete(scenario.id)}
                     aria-label={`Delete ${scenario.name}`}
-                    className="rounded border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:border-red-700 hover:text-red-400"
+                    className="rounded border border-line px-2 py-1 text-xs text-fg-soft hover:border-bad/60 hover:text-bad"
                   >
                     Delete
                   </button>
                 </div>
                 {scenario.description && (
-                  <p className="mt-1 text-slate-400">{scenario.description}</p>
+                  <p className="mt-1 text-fg-muted">{scenario.description}</p>
                 )}
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-fg-faint">
                   {scenario.attacker_start} → {scenario.critical_target} ·{' '}
                   {formatDate(scenario.created_at)}
                 </p>
@@ -235,65 +235,65 @@ export function ScenariosPage() {
       </section>
 
       {run.kind === 'error' && (
-        <div className="rounded border border-red-800 bg-slate-950 p-3">
-          <p className="font-semibold text-red-400">
+        <div className="rounded border border-bad/40 bg-well p-3">
+          <p className="notice-error-title">
             Could not simulate &ldquo;{run.scenario.name}&rdquo;
           </p>
-          <p className="mt-1 text-sm text-slate-400">{run.message}</p>
+          <p className="mt-1 text-sm text-fg-muted">{run.message}</p>
         </div>
       )}
 
       {run.kind === 'done' && (
         <div className="space-y-2">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-fg-muted">
             Simulation on saved scenario{' '}
-            <span className="font-medium text-slate-200">{run.scenario.name}</span> (
+            <span className="font-medium text-fg">{run.scenario.name}</span> (
             {run.result.start_node} → {run.result.target_node}). Simulated data only.
           </p>
           <ResultPanel result={run.result} />
         </div>
       )}
 
-      <section className="rounded-lg border border-slate-700 bg-slate-900 p-4">
-        <h2 className="font-semibold text-slate-100">Experiment history</h2>
+      <section className="panel p-4">
+        <h2 className="panel-title">Experiment history</h2>
 
         {experiments.kind === 'loading' && (
-          <p className="mt-2 text-sm text-slate-400">Loading experiment history…</p>
+          <p className="mt-2 text-sm text-fg-muted">Loading experiment history…</p>
         )}
 
         {experiments.kind === 'error' && (
-          <div className="mt-3 rounded border border-red-800 bg-slate-950 p-3">
-            <p className="font-semibold text-red-400">Could not load history</p>
-            <p className="mt-1 text-sm text-slate-400">{experiments.message}</p>
+          <div className="mt-3 rounded border border-bad/40 bg-well p-3">
+            <p className="notice-error-title">Could not load history</p>
+            <p className="mt-1 text-sm text-fg-muted">{experiments.message}</p>
           </div>
         )}
 
         {experiments.kind === 'ready' && experiments.items.length === 0 && (
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-fg-muted">
             No saved experiments yet. Run one in the Experiment Lab and choose Save to Database.
           </p>
         )}
 
         {experiments.kind === 'ready' && experiments.items.length > 0 && (
           <div className="mt-3 overflow-x-auto">
-            <table className="w-full min-w-[520px] text-sm">
+            <table className="data-table min-w-[520px]">
               <thead>
-                <tr className="text-left text-xs uppercase text-slate-500">
-                  <th className="py-1 font-medium">When</th>
-                  <th className="py-1 font-medium">Algorithm</th>
-                  <th className="py-1 font-medium">Strategy</th>
-                  <th className="py-1 text-right font-medium">Runs</th>
-                  <th className="py-1 text-right font-medium">Intercepted</th>
+                <tr>
+                  <th>When</th>
+                  <th>Algorithm</th>
+                  <th>Strategy</th>
+                  <th className="text-right">Runs</th>
+                  <th className="text-right">Intercepted</th>
                 </tr>
               </thead>
               <tbody>
                 {experiments.items.map((row) => (
-                  <tr key={row.experiment_id} className="border-t border-slate-800 text-slate-300">
-                    <td className="py-1">{formatDate(row.created_at)}</td>
-                    <td className="py-1">{row.algorithm}</td>
-                    <td className="py-1">{STRATEGY_LABELS[row.strategy] ?? row.strategy}</td>
-                    <td className="py-1 text-right tabular-nums">{row.runs}</td>
-                    <td className="py-1 text-right tabular-nums text-emerald-400">
+                  <tr key={row.experiment_id} className="text-fg-soft">
+                    <td>{formatDate(row.created_at)}</td>
+                    <td>{row.algorithm}</td>
+                    <td>{STRATEGY_LABELS[row.strategy] ?? row.strategy}</td>
+                    <td className="text-right tabular-nums">{row.runs}</td>
+                    <td className="text-right tabular-nums text-ok">
                       {Math.round(row.deception_success_rate * 100)}%
                     </td>
                   </tr>

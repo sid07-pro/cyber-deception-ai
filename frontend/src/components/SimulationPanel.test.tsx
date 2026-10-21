@@ -16,6 +16,7 @@ import { SimulationPanel } from './SimulationPanel'
 
 vi.mock('./NetworkGraph', () => ({
   NetworkGraph: () => <div data-testid="network-graph" />,
+  GraphLegend: () => null,
 }))
 
 const getNetwork = vi.fn()

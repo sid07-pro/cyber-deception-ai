@@ -24,7 +24,7 @@ const NEEDS_DEPTH: AITechnique[] = ['minimax', 'alpha_beta']
 const NEEDS_SEED: AITechnique[] = ['hill_climbing', 'genetic_algorithm']
 
 const SELECT_CLASS =
-  'mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-slate-100'
+  'field'
 
 export function AdvancedAIPanel({ settings }: { settings: SimulationSettings }) {
   const [technique, setTechnique] = useState<AITechnique>('minimax')
@@ -53,12 +53,12 @@ export function AdvancedAIPanel({ settings }: { settings: SimulationSettings }) 
   }
 
   return (
-    <section className="rounded-lg border border-slate-700 bg-slate-900 p-4">
-      <h2 className="font-semibold text-slate-100">Advanced AI analysis</h2>
+    <section className="panel p-4">
+      <h2 className="panel-title">Advanced AI analysis</h2>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="text-sm lg:col-span-2">
-          <span className="text-slate-400">Technique</span>
+          <span className="text-fg-muted">Technique</span>
           <select
             aria-label="Technique"
             className={SELECT_CLASS}
@@ -75,7 +75,7 @@ export function AdvancedAIPanel({ settings }: { settings: SimulationSettings }) 
 
         {NEEDS_DEPTH.includes(technique) && (
           <label className="text-sm">
-            <span className="text-slate-400">Search depth</span>
+            <span className="text-fg-muted">Search depth</span>
             <select
               aria-label="Search depth"
               className={SELECT_CLASS}
@@ -93,7 +93,7 @@ export function AdvancedAIPanel({ settings }: { settings: SimulationSettings }) 
 
         {NEEDS_SEED.includes(technique) && (
           <label className="text-sm">
-            <span className="text-slate-400">Random seed</span>
+            <span className="text-fg-muted">Random seed</span>
             <input
               aria-label="Random seed"
               type="number"
@@ -110,24 +110,24 @@ export function AdvancedAIPanel({ settings }: { settings: SimulationSettings }) 
         type="button"
         onClick={handleAnalyze}
         disabled={state.kind === 'loading'}
-        className="mt-4 rounded bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:bg-slate-700"
+        className="mt-4 btn-primary"
       >
         {state.kind === 'loading' ? 'Analyzing…' : 'Run Analysis'}
       </button>
 
       {state.kind === 'loading' && (
-        <p className="mt-3 text-sm text-slate-400">Running {AI_TECHNIQUE_LABELS[technique]}…</p>
+        <p className="mt-3 text-sm text-fg-muted">Running {AI_TECHNIQUE_LABELS[technique]}…</p>
       )}
 
       {state.kind === 'error' && (
-        <div className="mt-3 rounded border border-red-800 bg-slate-950 p-3">
-          <p className="font-semibold text-red-400">Analysis failed</p>
-          <p className="mt-1 text-sm text-slate-400">{state.message}</p>
+        <div className="mt-3 rounded border border-bad/40 bg-well p-3">
+          <p className="notice-error-title">Analysis failed</p>
+          <p className="mt-1 text-sm text-fg-muted">{state.message}</p>
         </div>
       )}
 
       {state.kind === 'idle' && (
-        <p className="mt-3 text-sm text-slate-400">
+        <p className="mt-3 text-sm text-fg-muted">
           No analysis yet. Pick a technique and select Run Analysis.
         </p>
       )}
@@ -139,35 +139,35 @@ export function AdvancedAIPanel({ settings }: { settings: SimulationSettings }) 
 
 function AnalysisResult({ result }: { result: AIAnalyzeResponse }) {
   return (
-    <div className="mt-4 rounded border border-violet-900 bg-slate-950 p-3">
+    <div className="mt-4 rounded border border-line bg-well p-3">
       <dl className="grid gap-2 text-sm sm:grid-cols-2">
         <div>
-          <dt className="text-slate-500">Technique</dt>
-          <dd className="text-slate-200">{AI_TECHNIQUE_LABELS[result.technique]}</dd>
+          <dt className="text-fg-faint">Technique</dt>
+          <dd className="text-fg">{AI_TECHNIQUE_LABELS[result.technique]}</dd>
         </div>
         <div>
-          <dt className="text-slate-500">Score</dt>
-          <dd className="tabular-nums text-slate-200">{result.score}</dd>
+          <dt className="text-fg-faint">Score</dt>
+          <dd className="tabular-nums text-fg">{result.score}</dd>
         </div>
         <div className="sm:col-span-2">
-          <dt className="text-slate-500">Recommendation</dt>
-          <dd className="text-violet-300">{result.recommendation}</dd>
+          <dt className="text-fg-faint">Recommendation</dt>
+          <dd className="text-gold-champagne">{result.recommendation}</dd>
         </div>
         {result.probability !== null && (
           <div>
-            <dt className="text-slate-500">Route compromise probability</dt>
-            <dd className="tabular-nums text-slate-200">{result.probability}</dd>
+            <dt className="text-fg-faint">Route compromise probability</dt>
+            <dd className="tabular-nums text-fg">{result.probability}</dd>
           </div>
         )}
         {result.honeypots.length > 0 && (
           <div className="sm:col-span-2">
-            <dt className="text-slate-500">Recommended honeypots</dt>
-            <dd className="text-amber-300">{result.honeypots.join(', ')}</dd>
+            <dt className="text-fg-faint">Recommended honeypots</dt>
+            <dd className="text-warn">{result.honeypots.join(', ')}</dd>
           </div>
         )}
       </dl>
 
-      <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-300">
+      <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-fg-soft">
         {result.explanation.map((line) => (
           <li key={line}>{line}</li>
         ))}

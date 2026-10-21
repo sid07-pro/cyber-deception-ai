@@ -54,6 +54,9 @@ export interface HealthResponse {
   status: string
   service: string
   version: string
+  environment?: string
+  /** 'connected' or 'unavailable'; absent on older backends. */
+  database?: string
 }
 
 /** Turns a non-2xx response into an Error carrying the backend's `detail`, when present. */

@@ -24,7 +24,7 @@ type LabState =
   | { kind: 'error'; message: string }
 
 const SELECT_CLASS =
-  'mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-slate-100'
+  'field'
 
 function percent(value: number): string {
   return `${Math.round(value * 100)}%`
@@ -68,12 +68,12 @@ export function ExperimentLab({ nodeNames, defaultStart, defaultTarget }: Experi
   }
 
   return (
-    <section className="rounded-lg border border-slate-700 bg-slate-900 p-4">
-      <h2 className="font-semibold text-slate-100">Experiment lab</h2>
+    <section className="panel p-4">
+      <h2 className="panel-title">Experiment lab</h2>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="text-sm">
-          <span className="text-slate-400">Algorithm</span>
+          <span className="text-fg-muted">Algorithm</span>
           <select
             aria-label="Experiment algorithm"
             className={SELECT_CLASS}
@@ -89,7 +89,7 @@ export function ExperimentLab({ nodeNames, defaultStart, defaultTarget }: Experi
         </label>
 
         <label className="text-sm">
-          <span className="text-slate-400">Strategy</span>
+          <span className="text-fg-muted">Strategy</span>
           <select
             aria-label="Honeypot strategy"
             className={SELECT_CLASS}
@@ -105,7 +105,7 @@ export function ExperimentLab({ nodeNames, defaultStart, defaultTarget }: Experi
         </label>
 
         <label className="text-sm">
-          <span className="text-slate-400">Honeypot budget</span>
+          <span className="text-fg-muted">Honeypot budget</span>
           <select
             aria-label="Experiment budget"
             className={SELECT_CLASS}
@@ -121,7 +121,7 @@ export function ExperimentLab({ nodeNames, defaultStart, defaultTarget }: Experi
         </label>
 
         <label className="text-sm">
-          <span className="text-slate-400">Runs</span>
+          <span className="text-fg-muted">Runs</span>
           <input
             aria-label="Runs"
             type="number"
@@ -136,7 +136,7 @@ export function ExperimentLab({ nodeNames, defaultStart, defaultTarget }: Experi
         </label>
 
         <label className="text-sm">
-          <span className="text-slate-400">Seed</span>
+          <span className="text-fg-muted">Seed</span>
           <input
             aria-label="Experiment seed"
             type="number"
@@ -148,7 +148,7 @@ export function ExperimentLab({ nodeNames, defaultStart, defaultTarget }: Experi
         </label>
 
         <label className="text-sm">
-          <span className="text-slate-400">Start node</span>
+          <span className="text-fg-muted">Start node</span>
           <select
             aria-label="Experiment start node"
             className={SELECT_CLASS}
@@ -164,7 +164,7 @@ export function ExperimentLab({ nodeNames, defaultStart, defaultTarget }: Experi
         </label>
 
         <label className="text-sm">
-          <span className="text-slate-400">Target node</span>
+          <span className="text-fg-muted">Target node</span>
           <select
             aria-label="Experiment target node"
             className={SELECT_CLASS}
@@ -184,25 +184,25 @@ export function ExperimentLab({ nodeNames, defaultStart, defaultTarget }: Experi
         type="button"
         onClick={handleRun}
         disabled={state.kind === 'running'}
-        className="mt-4 rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-700"
+        className="mt-4 btn-primary"
       >
         {state.kind === 'running' ? 'Running…' : 'Run Experiment'}
       </button>
 
       {state.kind === 'idle' && (
-        <p className="mt-3 text-sm text-slate-400">
+        <p className="mt-3 text-sm text-fg-muted">
           No experiment yet. Configure the scenario and select Run Experiment.
         </p>
       )}
 
       {state.kind === 'running' && (
-        <p className="mt-3 text-sm text-slate-400">Running {runs} simulation(s)…</p>
+        <p className="mt-3 text-sm text-fg-muted">Running {runs} simulation(s)…</p>
       )}
 
       {state.kind === 'error' && (
-        <div className="mt-3 rounded border border-red-800 bg-slate-950 p-3">
-          <p className="font-semibold text-red-400">Experiment failed</p>
-          <p className="mt-1 text-sm text-slate-400">{state.message}</p>
+        <div className="mt-3 rounded border border-bad/40 bg-well p-3">
+          <p className="notice-error-title">Experiment failed</p>
+          <p className="mt-1 text-sm text-fg-muted">{state.message}</p>
         </div>
       )}
 
@@ -232,21 +232,21 @@ function ExperimentReport({ experiment }: { experiment: ExperimentResponse }) {
   return (
     <div className="mt-4 space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="mr-auto text-sm text-slate-400">
-          Experiment <span className="text-slate-200">{experiment.experiment_id.slice(0, 8)}</span>{' '}
+        <p className="mr-auto text-sm text-fg-muted">
+          Experiment <span className="text-fg">{experiment.experiment_id.slice(0, 8)}</span>{' '}
           · {metrics.total_runs} run(s)
         </p>
         <button
           type="button"
           onClick={() => downloadExperimentJson(experiment)}
-          className="rounded border border-slate-600 px-3 py-1.5 text-sm text-slate-200 hover:border-slate-500"
+          className="btn-secondary"
         >
           Download JSON
         </button>
         <button
           type="button"
           onClick={() => downloadExperimentCsv(experiment)}
-          className="rounded border border-slate-600 px-3 py-1.5 text-sm text-slate-200 hover:border-slate-500"
+          className="btn-secondary"
         >
           Download CSV
         </button>
@@ -254,16 +254,16 @@ function ExperimentReport({ experiment }: { experiment: ExperimentResponse }) {
           type="button"
           onClick={handleSave}
           disabled={saveState.kind === 'saving' || saveState.kind === 'saved'}
-          className="rounded border border-slate-600 px-3 py-1.5 text-sm text-slate-200 hover:border-slate-500 disabled:cursor-not-allowed disabled:text-slate-500"
+          className="btn-secondary"
         >
           {saveState.kind === 'saved' ? 'Saved' : 'Save to Database'}
         </button>
       </div>
 
       {saveState.kind === 'error' && (
-        <div className="rounded border border-red-800 bg-slate-950 p-3">
-          <p className="font-semibold text-red-400">Could not save the experiment</p>
-          <p className="mt-1 text-sm text-slate-400">{saveState.message}</p>
+        <div className="rounded border border-bad/40 bg-well p-3">
+          <p className="notice-error-title">Could not save the experiment</p>
+          <p className="mt-1 text-sm text-fg-muted">{saveState.message}</p>
         </div>
       )}
 
@@ -280,22 +280,24 @@ function ExperimentReport({ experiment }: { experiment: ExperimentResponse }) {
 
       {experiment.strategy_comparison.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-slate-400">
+          <h3 className="text-xs font-semibold text-fg-soft">
             Strategy comparison — interception rate
           </h3>
           <ul className="mt-2 space-y-1.5">
             {experiment.strategy_comparison.map((row) => (
               <li key={row.strategy} className="flex items-center gap-3 text-sm">
-                <span className="w-44 shrink-0 text-slate-300">
+                <span className="w-44 shrink-0 text-fg-soft">
                   {STRATEGY_LABELS[row.strategy]}
                 </span>
-                <span className="h-3 flex-1 overflow-hidden rounded bg-slate-800">
+                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-raised">
                   <span
-                    className="block h-full rounded bg-emerald-500"
+                    className={`block h-full rounded-full ${
+                      row.strategy === experiment.configuration.strategy ? 'bg-gold' : 'bg-fg-faint/60'
+                    }`}
                     style={{ width: `${Math.round(row.deception_success_rate * 100)}%` }}
                   />
                 </span>
-                <span className="w-12 shrink-0 text-right tabular-nums text-slate-400">
+                <span className="w-12 shrink-0 text-right tabular-nums text-fg-muted">
                   {percent(row.deception_success_rate)}
                 </span>
               </li>
@@ -305,40 +307,40 @@ function ExperimentReport({ experiment }: { experiment: ExperimentResponse }) {
       )}
 
       <div className="overflow-x-auto">
-        <h3 className="text-sm font-medium text-slate-400">
+        <h3 className="text-xs font-semibold text-fg-soft">
           Run history {experiment.truncated_runs > 0 && `(first ${experiment.runs.length})`}
         </h3>
-        <table className="mt-2 w-full min-w-[440px] text-sm">
+        <table className="data-table mt-2 min-w-[440px]">
           <thead>
-            <tr className="text-left text-xs uppercase text-slate-500">
-              <th className="py-1 font-medium">Run</th>
-              <th className="py-1 font-medium">Outcome</th>
-              <th className="py-1 font-medium">Honeypots</th>
-              <th className="py-1 text-right font-medium">Steps</th>
-              <th className="py-1 text-right font-medium">Fitness</th>
+            <tr>
+              <th>Run</th>
+              <th>Outcome</th>
+              <th>Honeypots</th>
+              <th className="text-right">Steps</th>
+              <th className="text-right">Fitness</th>
             </tr>
           </thead>
           <tbody>
             {experiment.runs.map((run) => (
-              <tr key={run.run} className="border-t border-slate-800 text-slate-300">
-                <td className="py-1 tabular-nums">{run.run}</td>
+              <tr key={run.run} className="text-fg-soft">
+                <td className="tabular-nums">{run.run}</td>
                 <td
                   className={`py-1 ${
-                    run.outcome === 'intercepted' ? 'text-emerald-400' : 'text-red-400'
+                    run.outcome === 'intercepted' ? 'text-ok' : 'text-bad'
                   }`}
                 >
                   {run.outcome.replace('_', ' ')}
                 </td>
-                <td className="py-1">{run.honeypots.join(', ') || '—'}</td>
-                <td className="py-1 text-right tabular-nums">{run.steps}</td>
-                <td className="py-1 text-right tabular-nums">{run.fitness}</td>
+                <td>{run.honeypots.join(', ') || '—'}</td>
+                <td className="text-right tabular-nums">{run.steps}</td>
+                <td className="text-right tabular-nums">{run.fitness}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <ul className="list-disc space-y-1 pl-5 text-sm text-slate-300">
+      <ul className="list-disc space-y-1 pl-5 text-sm text-fg-soft">
         {experiment.explanation.map((line) => (
           <li key={line}>{line}</li>
         ))}
@@ -349,9 +351,9 @@ function ExperimentReport({ experiment }: { experiment: ExperimentResponse }) {
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded border border-slate-800 bg-slate-950 px-3 py-2">
-      <dt className="text-xs text-slate-500">{label}</dt>
-      <dd className="tabular-nums text-slate-200">{value}</dd>
+    <div className="rounded border border-line-soft bg-well px-3 py-2">
+      <dt className="text-xs text-fg-faint">{label}</dt>
+      <dd className="tabular-nums text-fg">{value}</dd>
     </div>
   )
 }
