@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
   const proxyTarget = env.VITE_PROXY_TARGET || 'http://localhost:8000'
 
   return {
+    // GitHub Pages serves the app from /<repo>/; everywhere else it is the root.
+    base: env.VITE_BASE_PATH || '/',
     plugins: [react()],
     server: {
       port: 5173,
