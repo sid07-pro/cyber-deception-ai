@@ -1,0 +1,126 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Report diagrams</title>
+<style>
+  body { margin: 0; background: #fff; font-family: Arial, sans-serif; }
+  svg text { font-family: Arial, sans-serif; }
+  .d { width: 1400px; height: 640px; }
+</style></head>
+<body>
+<!-- Figure: system architecture (matches backend/app, backend/ai, frontend/src, docker-compose.yml) -->
+<svg id="arch" class="d" viewBox="0 0 1400 640" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+  <rect x="10" y="10" width="1380" height="620" fill="none" stroke="#999" stroke-dasharray="6 4"/>
+  <text x="24" y="36" font-size="18" fill="#555">Docker Compose (local): frontend :5173 · backend :8000 · db :5432</text>
+  <g font-size="17">
+    <rect x="40" y="80" width="330" height="470" rx="8" fill="#f4f1ea" stroke="#333"/>
+    <text x="60" y="115" font-size="21" font-weight="bold">Frontend (browser)</text>
+    <text x="60" y="150">React 18 + TypeScript + Vite</text>
+    <text x="60" y="180">Tailwind CSS · React Flow graph</text>
+    <text x="60" y="225" font-weight="bold">Pages</text>
+    <text x="60" y="255">Dashboard · Network Topology</text>
+    <text x="60" y="282">Attack Path Analysis</text>
+    <text x="60" y="309">Honeypot Placement</text>
+    <text x="60" y="336">Advanced Analysis · Defense Planning</text>
+    <text x="60" y="363">Experiment Lab · Saved Scenarios</text>
+    <text x="60" y="410" font-weight="bold">api/client.ts</text>
+    <text x="60" y="440">typed fetch → /api/*</text>
+
+    <rect x="470" y="80" width="400" height="470" rx="8" fill="#eef2f7" stroke="#333"/>
+    <text x="490" y="115" font-size="21" font-weight="bold">Backend — FastAPI (Python)</text>
+    <text x="490" y="155" font-weight="bold">Routes (app/api/routes)</text>
+    <text x="490" y="182">/health /network /simulate</text>
+    <text x="490" y="209">/simulation/* /ai/analyze /planning/plan</text>
+    <text x="490" y="236">/experiments/* /scenarios/*</text>
+    <text x="490" y="280" font-weight="bold">Schemas (Pydantic validation)</text>
+    <text x="490" y="325" font-weight="bold">Services (app/services)</text>
+    <text x="490" y="352">simulation_service · ai_registry</text>
+    <text x="490" y="379">planning_service · experiment_service</text>
+    <text x="490" y="406">deception_engine · persistence_service</text>
+
+    <rect x="970" y="80" width="390" height="250" rx="8" fill="#f1f5ee" stroke="#333"/>
+    <text x="990" y="115" font-size="21" font-weight="bold">Algorithms (pure Python)</text>
+    <text x="990" y="150">simulation/network.py (NetworkX graph)</text>
+    <text x="990" y="180">ai/bfs, dfs, ucs, astar</text>
+    <text x="990" y="210">ai/optimizer (greedy score)</text>
+    <text x="990" y="240">ai/hill_climbing · ai/genetic · ai/fitness</text>
+    <text x="990" y="270">ai/minimax · alpha_beta · bayesian</text>
+    <text x="990" y="300">ai/planning (STRIPS-style)</text>
+
+    <rect x="970" y="380" width="390" height="170" rx="8" fill="#f7efef" stroke="#333"/>
+    <text x="990" y="415" font-size="21" font-weight="bold">Persistence</text>
+    <text x="990" y="450">SQLAlchemy 2 ORM</text>
+    <text x="990" y="480">SQLite (default) / PostgreSQL 16</text>
+    <text x="990" y="510">scenarios · experiment history</text>
+  </g>
+  <line x1="370" y1="300" x2="466" y2="300" stroke="#333" stroke-width="2.5" marker-end="url(#a)"/>
+  <line x1="470" y1="330" x2="374" y2="330" stroke="#333" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="378" y="290" font-size="15">JSON request</text>
+  <text x="378" y="352" font-size="15">JSON response</text>
+  <line x1="870" y1="205" x2="966" y2="205" stroke="#333" stroke-width="2.5" marker-end="url(#a)"/>
+  <line x1="870" y1="465" x2="966" y2="465" stroke="#333" stroke-width="2.5" marker-end="url(#a)"/>
+</svg>
+
+<!-- Figure: workflow of one simulation request -->
+<svg id="flow" class="d" viewBox="0 0 1400 640" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="b" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+  <g font-size="17">
+    <rect x="30" y="60" width="300" height="200" rx="8" fill="#f4f1ea" stroke="#333"/>
+    <text x="50" y="95" font-size="20" font-weight="bold">1. Input</text>
+    <text x="50" y="130">Search strategy (BFS/DFS/UCS/A*)</text>
+    <text x="50" y="158">Start node · target node</text>
+    <text x="50" y="186">Honeypot budget (0–5)</text>
+    <text x="50" y="214">Optional saved scenario</text>
+
+    <rect x="370" y="60" width="300" height="200" rx="8" fill="#eef2f7" stroke="#333"/>
+    <text x="390" y="95" font-size="20" font-weight="bold">2. Validation</text>
+    <text x="390" y="130">Pydantic SimulationRequest</text>
+    <text x="390" y="158">422 invalid body</text>
+    <text x="390" y="186">404 unknown node / scenario</text>
+
+    <rect x="710" y="60" width="300" height="200" rx="8" fill="#f1f5ee" stroke="#333"/>
+    <text x="730" y="95" font-size="20" font-weight="bold">3. Network model</text>
+    <text x="730" y="130">build_network() or</text>
+    <text x="730" y="158">graph_from_scenario()</text>
+    <text x="730" y="186">weighted undirected graph</text>
+
+    <rect x="1050" y="60" width="320" height="200" rx="8" fill="#f1f5ee" stroke="#333"/>
+    <text x="1070" y="95" font-size="20" font-weight="bold">4. Attacker search</text>
+    <text x="1070" y="130">run_all_algorithms()</text>
+    <text x="1070" y="158">select_attacker_path()</text>
+    <text x="1070" y="186">→ predicted route + cost</text>
+
+    <rect x="1050" y="380" width="320" height="200" rx="8" fill="#f1f5ee" stroke="#333"/>
+    <text x="1070" y="415" font-size="20" font-weight="bold">5. Defender placement</text>
+    <text x="1070" y="450">plan_defense() →</text>
+    <text x="1070" y="478">score_candidates() (greedy)</text>
+    <text x="1070" y="506">top-k honeypots</text>
+
+    <rect x="710" y="380" width="300" height="200" rx="8" fill="#f7efef" stroke="#333"/>
+    <text x="730" y="415" font-size="20" font-weight="bold">6. Evaluation</text>
+    <text x="730" y="450">evaluate_interception()</text>
+    <text x="730" y="478">alternative_paths() (k = 3)</text>
+    <text x="730" y="506">generate_explanations()</text>
+
+    <rect x="370" y="380" width="300" height="200" rx="8" fill="#eef2f7" stroke="#333"/>
+    <text x="390" y="415" font-size="20" font-weight="bold">7. Response</text>
+    <text x="390" y="450">SimulationResponse JSON</text>
+    <text x="390" y="478">path, cost, honeypots,</text>
+    <text x="390" y="506">scores, outcome, routes</text>
+
+    <rect x="30" y="380" width="300" height="200" rx="8" fill="#f4f1ea" stroke="#333"/>
+    <text x="50" y="415" font-size="20" font-weight="bold">8. Presentation</text>
+    <text x="50" y="450">ResultPanel · NetworkGraph</text>
+    <text x="50" y="478">gold route, decoy tags</text>
+    <text x="50" y="506">history → Dashboard</text>
+  </g>
+  <g stroke="#333" stroke-width="2.5">
+    <line x1="330" y1="160" x2="366" y2="160" marker-end="url(#b)"/>
+    <line x1="670" y1="160" x2="706" y2="160" marker-end="url(#b)"/>
+    <line x1="1010" y1="160" x2="1046" y2="160" marker-end="url(#b)"/>
+    <line x1="1210" y1="260" x2="1210" y2="376" marker-end="url(#b)"/>
+    <line x1="1050" y1="480" x2="1014" y2="480" marker-end="url(#b)"/>
+    <line x1="710" y1="480" x2="674" y2="480" marker-end="url(#b)"/>
+    <line x1="370" y1="480" x2="334" y2="480" marker-end="url(#b)"/>
+  </g>
+</svg>
+</body></html>

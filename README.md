@@ -12,6 +12,19 @@ budget to intercept it, and the whole interaction is simulated, explained, and m
 
 ---
 
+## Live deployment (free tier)
+
+| Component | URL |
+| --- | --- |
+| Web app (GitHub Pages) | https://sid07-pro.github.io/cyber-deception-ai/ |
+| API (Render, free web service) | https://cyber-deception-api.onrender.com/api/health |
+| Database | Render free PostgreSQL (internal) |
+
+The free API sleeps after ~15 min idle; the first request can take up to a minute. The frontend is
+rebuilt and published by `.github/workflows/pages.yml` on every push to `main`.
+
+Final report: [reports/Cyber_Deception_AI_Final_VIT_Report.pdf](reports/Cyber_Deception_AI_Final_VIT_Report.pdf)
+
 ## Architecture
 
 ```
